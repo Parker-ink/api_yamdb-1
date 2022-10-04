@@ -21,6 +21,7 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+
 class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(
@@ -46,7 +47,7 @@ class Title(models.Model):
         Genre,
         on_delete=models.CASCADE
     )
-    name = models.CharField()
+    name = models.CharField(max_length=256)
     year = models.IntegerField()
 
 
