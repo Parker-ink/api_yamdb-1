@@ -42,7 +42,8 @@ class Genre(models.Model):
 class Title(models.Model):
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='category'
     )
     genre = models.ForeignKey(
         Genre,
