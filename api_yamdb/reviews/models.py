@@ -3,6 +3,7 @@ from django.db import models
 
 
 class User(AbstractUser):
+
     ROLES = (
         ('user', 'Пользователь'),
         ('moderator', 'Модератор'),
@@ -65,7 +66,6 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name='reviews'
     )
-    """Описываю title сразу, уверен должно сойтись"""
     title = models.ForeignKey(
         Title,
         verbose_name='Произведение',

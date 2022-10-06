@@ -48,3 +48,9 @@ class IsModerator(permissions.BasePermission):
         return (
             current_user.role == 'moderator'
         )
+
+
+class ReadOnly(permissions.BasePermission):
+    """Пермишен только для просмотра доступный всем"""
+    def has_permission(self, request, view):
+        return request.method in permissions.SAFE_METHODS

@@ -2,19 +2,30 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, mixins, viewsets
-from api.serializers import (
-    SignupSerializer,
-    UserSerializer,
-    TokenSerializer,
-)
-from reviews.models import User
 from django.core import mail
-from api.permissions import IsAdmin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from reviews.models import (
+    Category,
+    Genre,
+    Title,
+    Review,
+    Comment,
+    User,
+)
+from .serializers import (
+    CategorySerializer,
+    GenreSerializer,
+    TitleSerializer,
+    ReviewSerializer,
+    CommentSerializer,
+    SignupSerializer,
+    UserSerializer,
+    TokenSerializer,
+)
+from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 
 @api_view(['POST'])
 def signup(request):
@@ -88,6 +99,28 @@ class MeViewSet(
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
 
-    # def get_queryset(self):
-    #     return get_object_or_404(
-    #         User, username=self.kwargs['username'])
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class GenreViewSet(viewsets.ModelViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
