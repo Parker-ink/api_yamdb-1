@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status, mixins, viewsets
+from rest_framework import status, mixins, viewsets, permissions, filters
 from django.core import mail
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
@@ -15,6 +15,7 @@ from reviews.models import (
     Comment,
     User,
 )
+from .permissions import IsAdmin
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -114,11 +115,21 @@ class CommentViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    permission_classes = (
 
+    )
+    
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    permission_classes = (
+
+    )
 
 
 class TitleViewSet(viewsets.ModelViewSet):
