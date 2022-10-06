@@ -28,20 +28,20 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 
 
 class IsAdmin(permissions.BasePermission):
-    """
-    Если роль moderator, можно разрешить редактировать и удалять
-    чужие отзывы и комментарии
-    """
+    """Если роль admin, можно разрешить полный доступ"""
 
     def has_permission(self, request, view):
         current_user = User.objects.filter(username=request.user.username)
         return (
-            current_user.role == 'admin'
+            current_user.role == 'admin' or current_user.is_superuser == 1
         )
 
 
 class IsModerator(permissions.BasePermission):
-    """Если роль admin, можно разрешить полный доступ"""
+    """
+    Если роль moderator, можно разрешить редактировать и удалять
+    чужие отзывы и комментарии
+    """
 
     def has_permission(self, request, view):
         current_user = User.objects.filter(username=request.user.username)

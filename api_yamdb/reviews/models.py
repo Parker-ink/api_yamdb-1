@@ -1,4 +1,3 @@
-from email.policy import default
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -18,6 +17,11 @@ class User(AbstractUser):
         max_length=10,
         choices=ROLES,
         default='user',
+    )
+    confirmation_code = models.CharField(
+        'Код подтверждения',
+        max_length=10,
+        blank=True,
     )
 
     def __str__(self):
