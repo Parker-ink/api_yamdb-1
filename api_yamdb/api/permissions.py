@@ -28,6 +28,16 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 
 
 class IsAdmin(permissions.BasePermission):
+    """Если роль admin, можно разрешить полный доступ"""
+
+    def has_permission(self, request, view):
+        current_user = User.objects.filter(username=request.user.username)
+        return (
+            current_user.role == 'admin' or current_user.is_superuser == 1
+        )
+
+
+class IsModerator(permissions.BasePermission):
     """
     Если роль moderator, можно разрешить редактировать и удалять
     чужие отзывы и комментарии
@@ -36,15 +46,11 @@ class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         current_user = User.objects.filter(username=request.user.username)
         return (
-            current_user.role == 'admin'
-        )
-
-
-class IsModerator(permissions.BasePermission):
-    """Если роль admin, можно разрешить полный доступ"""
-
-    def has_permission(self, request, view):
-        current_user = User.objects.filter(username=request.user.username)
-        return (
             current_user.role == 'moderator'
         )
+
+
+class ReadOnly(permissions.BasePermission):
+    """Пермишен только для просмотра доступный всем"""
+    def has_permission(self, request, view):
+        return request.method in permissions.SAFE_METHODS
