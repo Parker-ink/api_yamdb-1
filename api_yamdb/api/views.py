@@ -28,6 +28,7 @@ from .serializers import (
 )
 from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 
+
 @api_view(['POST'])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
@@ -100,6 +101,7 @@ class MeViewSet(
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
 
+
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
@@ -120,7 +122,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = (
 
     )
-    
+
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
