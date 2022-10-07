@@ -4,10 +4,14 @@ from django.db import models
 
 class User(AbstractUser):
 
-    ROLES = (
-        ('user', 'Пользователь'),
-        ('moderator', 'Модератор'),
-        ('admin', 'Администратор'),
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
+    SUPERUSER = 1
+    USER_ROLES = (
+        (USER, 'Пользователь'),
+        (MODERATOR, 'Модератор'),
+        (ADMIN, 'Администратор'),
     )
     bio = models.TextField(
         'Биография',
@@ -16,12 +20,22 @@ class User(AbstractUser):
     role = models.CharField(
         'Роль',
         max_length=10,
-        choices=ROLES,
+        choices=USER_ROLES,
         default='user',
     )
 
     def __str__(self):
         return self.username
+
+    # def is_admin(self):
+    #     return (
+    #         self.role == ADMIN
+    #     )
+
+    # def is_moderator(self):
+    #     return (
+    #         self.role == MODERATOR
+    #     )
 
 
 class Category(models.Model):

@@ -2,30 +2,31 @@ from rest_framework import serializers
 
 from reviews.models import User, Comment, Review, Category, Genre, Title
 
+
 class SignupSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=254)
     username = serializers.CharField(max_length=150)
 
-    def validate_username(self, value):
-        """
-        Проверяем, что username != 'me' и на уникальность.
-        """
-        if value == 'me':
-            raise serializers.ValidationError(
-                'username не может равняться me')
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError(
-                'Такой username уже зарегистрирован')
-        return value
+    # def validate_username(self, value):
+    #     """
+    #     Проверяем, что username != 'me' и на уникальность.
+    #     """
+    #     if value == 'me':
+    #         raise serializers.ValidationError(
+    #             'username не может равняться me')
+    #     if User.objects.filter(username=value).exists():
+    #         raise serializers.ValidationError(
+    #             'Такой username уже зарегистрирован')
+    #     return value
 
-    def validate_email(self, value):
-        """
-        Проверяем email на уникальность.
-        """
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                'Такой email уже зарегистрирован')
-        return value
+    # def validate_email(self, value):
+    #     """
+    #     Проверяем email на уникальность.
+    #     """
+    #     if User.objects.filter(email=value).exists():
+    #         raise serializers.ValidationError(
+    #             'Такой email уже зарегистрирован')
+    #     return value
 
 
 class TokenSerializer(serializers.Serializer):
@@ -45,6 +46,9 @@ class UserSerializer(serializers.Serializer):
         required=False
     )
 
+    def create(self, validated_data):
+        return User.objects.create(**validated_data, is_active=0)
+
     def validate_username(self, value):
         """
         Проверяем username на уникальность.
@@ -62,6 +66,7 @@ class UserSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "Такой email уже зарегистрирован")
         return value
+
 
 class CommentSerializer(serializers.ModelSerializer):
     review = serializers.SlugRelatedField(

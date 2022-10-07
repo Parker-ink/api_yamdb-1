@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status, mixins, viewsets, permissions, filters
+from rest_framework import status, mixins, viewsets, filters
 from django.core import mail
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
@@ -28,14 +28,14 @@ from .serializers import (
 )
 from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 
+
 @api_view(['POST'])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
-        user = User.objects.create(
+        user, obj = User.objects.get_or_create(
             username=serializer.data['username'],
             email=serializer.data['email'],
-            is_active=0,
         )
         confirmation_code = default_token_generator.make_token(user)
         with mail.get_connection() as connection:
@@ -46,6 +46,8 @@ def signup(request):
                 [serializer.data['email']],
                 connection=connection,
             ).send()
+        User.objects.filter(
+            username=serializer.data['username']).update(is_active=0)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -59,6 +61,8 @@ def get_token(request):
         confirmation_code = serializer.data['confirmation_code']
         if default_token_generator.check_token(user, confirmation_code):
             token = RefreshToken.for_user(user)
+            User.objects.filter(
+                username=serializer.data['username']).update(is_active=1)
             return Response(
                 {'token': str(token.access_token)},
                 status=status.HTTP_200_OK
@@ -73,7 +77,7 @@ class UsersViewSet(
 ):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAdmin,)
     pagination_class = LimitOffsetPagination
     search_fields = ('username',)
 
@@ -85,7 +89,7 @@ class UserViewSet(
     viewsets.GenericViewSet
 ):
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAdmin,)
 
     def get_queryset(self):
         return get_object_or_404(
@@ -99,6 +103,7 @@ class MeViewSet(
 ):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
@@ -120,7 +125,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = (
 
     )
-    
+
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
@@ -128,7 +133,6 @@ class GenreViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     permission_classes = (
-
     )
 
 
