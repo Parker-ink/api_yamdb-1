@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class User(AbstractUser):
@@ -72,6 +73,13 @@ class Review(models.Model):
         verbose_name='Дата публикации',
         auto_now_add=True,
     )
+    score = models.PositiveSmallIntegerField(
+        verbose_name='Рейтинг',
+        validators=[
+            MinValueValidator(1, 'Допустимы значения от 1 до 10'),
+            MaxValueValidator(10, 'Допустимы значения от 1 до 10')
+        ]
+    )
 
     class Meta:
         verbose_name = 'Отзыв'
@@ -100,3 +108,30 @@ class Comment(models.Model):
     class Meta:
         verbose_name = 'Комментарий'
         ordering = ['pub_date']
+
+
+"""
+class RatingStar(models.Model):
+    value = models.SmallIntegerField("Значение", default=0)
+
+    def __str__(self):
+        return f'{self.value}'
+
+    class Meta:
+        verbose_name = "Звезда"
+        ordering = ["-value"]
+
+
+class Rating(models.Model):
+    ip = models.CharField("Ip адрес клиента", max_length=69)
+    star = models.ForeignKey(
+        RatingStar,
+        on_delete=models.CASCADE,
+        verbose_name='Звезда'
+    )
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        verbose_name='Произведение'
+    )
+"""

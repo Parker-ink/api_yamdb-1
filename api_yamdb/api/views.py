@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, mixins, viewsets, permissions, filters
@@ -27,6 +28,7 @@ from .serializers import (
     TokenSerializer,
 )
 from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
+
 
 @api_view(['POST'])
 def signup(request):
@@ -100,6 +102,7 @@ class MeViewSet(
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
 
+
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
@@ -120,7 +123,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = (
 
     )
-    
+
 
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
@@ -133,5 +136,7 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(
+        Avg("reviews__score")
+    ).order_by("name")
     serializer_class = TitleSerializer
