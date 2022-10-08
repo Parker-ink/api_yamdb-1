@@ -59,7 +59,7 @@ class Title(models.Model):
         related_name='genre'
     )
     name = models.CharField(max_length=256)
-    year = models.IntegerField()
+    year = models.IntegerField(default='2000')
 
 
 class Review(models.Model):
