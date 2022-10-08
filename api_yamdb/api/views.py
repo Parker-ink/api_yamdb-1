@@ -1,12 +1,12 @@
-from django.contrib.auth.tokens import default_token_generator
-from django.core import mail
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, viewsets
-from rest_framework.decorators import action, api_view
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated
+from django.db.models import Avg
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status, mixins, viewsets, filters
+from django.core import mail
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import LimitOffsetPagination
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import RefreshToken
 from reviews.models import (
     Category,
@@ -16,6 +16,7 @@ from reviews.models import (
     Comment,
     User,
 )
+from .permissions import IsAdmin
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -26,18 +27,10 @@ from .serializers import (
     UserSerializer,
     TokenSerializer,
 )
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, ReadOnly
+from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 from rest_framework.decorators import action
 from django.db import IntegrityError
 
-from reviews.models import Category, Comment, Genre, Review, Title, User
-from api.permissions import IsAdmin
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, ReviewSerializer,
-                             SignupSerializer, TitleSerializer,
-                             TokenSerializer, UserMePatchSerializer,
-                             UserSerializer)
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 
 
 @api_view(['POST'])
