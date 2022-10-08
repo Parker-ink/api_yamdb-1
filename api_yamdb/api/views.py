@@ -27,16 +27,23 @@ from .serializers import (
     TokenSerializer,
 )
 from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
+from rest_framework.decorators import action
+from django.db import IntegrityError
 
 
 @api_view(['POST'])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
-        user, obj = User.objects.get_or_create(
-            username=serializer.data['username'],
-            email=serializer.data['email'],
-        )
+        if serializer.data['username'] == 'me':
+            return Response('Username не может равняться me', status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user, obj = User.objects.get_or_create(
+                username=serializer.data['username'],
+                email=serializer.data['email'],
+            )
+        except IntegrityError:
+            return Response('Username и/или email уже есть в базе', status=status.HTTP_400_BAD_REQUEST)
         confirmation_code = default_token_generator.make_token(user)
         with mail.get_connection() as connection:
             mail.EmailMessage(
@@ -70,39 +77,31 @@ def get_token(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UsersViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
-):
+class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAdmin,)
     pagination_class = LimitOffsetPagination
     search_fields = ('username',)
+    lookup_field = 'username'
 
-
-class UserViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
-    serializer_class = UserSerializer
-    permission_classes = (IsAdmin,)
-
-    def get_queryset(self):
-        return get_object_or_404(
-            User, username=self.kwargs['username'])
-
-
-class MeViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    viewsets.GenericViewSet
-):
-    serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
+    @action(
+        detail=False, methods=['get', 'patch'],
+        url_path='me', permission_classes=(IsAuthenticated,)
+    )
+    def me(self, request):
+        if request.method == 'GET':
+            user = request.user
+            serializer = self.get_serializer(user, many=False)
+            return Response(serializer.data)
+        if request.method == 'PATCH':
+            instance = request.user
+            user = request.data
+            serializer = self.get_serializer(instance, user, many=False, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
