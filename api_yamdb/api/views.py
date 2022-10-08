@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, mixins, viewsets, filters
@@ -29,6 +30,7 @@ from .serializers import (
 from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 from rest_framework.decorators import action
 from django.db import IntegrityError
+
 
 
 @api_view(['POST'])
@@ -104,6 +106,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
@@ -136,5 +139,7 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(
+        Avg("reviews__score")
+    ).order_by("name")
     serializer_class = TitleSerializer
