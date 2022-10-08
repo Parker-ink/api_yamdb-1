@@ -16,7 +16,6 @@ from reviews.models import (
     Comment,
     User,
 )
-from .permissions import IsAdmin
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -27,7 +26,7 @@ from .serializers import (
     UserSerializer,
     TokenSerializer,
 )
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
+from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, ReadOnly, IsAdminOrReadOnly
 from rest_framework.decorators import action
 from django.db import IntegrityError
 
@@ -104,6 +103,12 @@ class UsersViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CreateRetrieveViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
+                            viewsets.GenericViewSet):
+    # В теле класса никакой код не нужен! Пустячок, а приятно.
+    pass 
+
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
@@ -117,31 +122,41 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CreateRetrieveViewSet(mixins.CreateModelMixin,
+                 mixins.DestroyModelMixin,
+                 mixins.ListModelMixin,
+                 viewsets.GenericViewSet):
+    pass 
+
+class CategoryViewSet(CreateRetrieveViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    lookup_field = 'slug'
+    ordering_fields = ('name')
     permission_classes = (
-        IsAdmin, ReadOnly,
+        IsAdminOrReadOnly,
     )
+    
 
-
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(CreateRetrieveViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    lookup_field = 'slug'
     permission_classes = (
-        IsAdmin, ReadOnly,
+        IsAdminOrReadOnly,
     )
 
 
-class TitleViewSet(viewsets.ModelViewSet):
+class TitleViewSet(CreateRetrieveViewSet):
     queryset = Title.objects.all().annotate(
         Avg("reviews__score")
     ).order_by("name")
     serializer_class = TitleSerializer
     permission_classes = (
-        IsAdmin, ReadOnly,
+        IsAdminOrReadOnly,
     )
+    

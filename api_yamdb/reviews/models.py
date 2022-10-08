@@ -48,12 +48,15 @@ class Genre(models.Model):
 class Title(models.Model):
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE,
-        related_name='category'
+        on_delete=models.PROTECT,
+        related_name='categories'
     )
-    genre = models.ForeignKey(
+    description = models.TextField(
+        blank=True
+    )
+    genre = models.ManyToManyField(
         Genre,
-        on_delete=models.CASCADE
+        related_name='genre'
     )
     name = models.CharField(max_length=256)
     year = models.IntegerField()
