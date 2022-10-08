@@ -27,7 +27,6 @@ def signup(request):
         user, obj = User.objects.get_or_create(
             username=serializer.data['username'],
             email=serializer.data['email'],
-            is_active=0,
         )
 
         confirmation_code = default_token_generator.make_token(user)
@@ -52,8 +51,6 @@ def get_token(request):
         confirmation_code = serializer.data['confirmation_code']
         if default_token_generator.check_token(user, confirmation_code):
             token = RefreshToken.for_user(user)
-            User.objects.filter(
-                username=serializer.data['username']).update(is_active=1)
             return Response(
                 {'token': str(token.access_token)},
                 status=status.HTTP_200_OK
