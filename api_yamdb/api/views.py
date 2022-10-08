@@ -1,37 +1,22 @@
-from django.shortcuts import get_object_or_404
-from django.db.models import Avg
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status, mixins, viewsets, filters
-from django.core import mail
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import LimitOffsetPagination
 from django.contrib.auth.tokens import default_token_generator
+from django.core import mail
+from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action, api_view
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from reviews.models import (
-    Category,
-    Genre,
-    Title,
-    Review,
-    Comment,
-    User,
-)
-from .permissions import IsAdmin
-from .serializers import (
-    CategorySerializer,
-    GenreSerializer,
-    TitleSerializer,
-    ReviewSerializer,
-    CommentSerializer,
-    SignupSerializer,
-    UserSerializer,
-    TokenSerializer,
-    UserMePatchSerializer,
-)
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
-from rest_framework.decorators import action
-from django.db import IntegrityError
 
+from reviews.models import Category, Comment, Genre, Review, Title, User
+from api.permissions import IsAdmin
+from api.serializers import (CategorySerializer, CommentSerializer,
+                             GenreSerializer, ReviewSerializer,
+                             SignupSerializer, TitleSerializer,
+                             TokenSerializer, UserMePatchSerializer,
+                             UserSerializer)
+from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 
 
 @api_view(['POST'])
@@ -42,7 +27,6 @@ def signup(request):
         user, obj = User.objects.get_or_create(
             username=serializer.data['username'],
             email=serializer.data['email'],
-            is_active=0,
         )
 
         confirmation_code = default_token_generator.make_token(user)
@@ -67,8 +51,6 @@ def get_token(request):
         confirmation_code = serializer.data['confirmation_code']
         if default_token_generator.check_token(user, confirmation_code):
             token = RefreshToken.for_user(user)
-            User.objects.filter(
-                username=serializer.data['username']).update(is_active=1)
             return Response(
                 {'token': str(token.access_token)},
                 status=status.HTTP_200_OK

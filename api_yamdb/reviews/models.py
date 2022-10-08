@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 
 class User(AbstractUser):
@@ -13,10 +13,6 @@ class User(AbstractUser):
         (USER, 'Пользователь'),
         (MODERATOR, 'Модератор'),
         (ADMIN, 'Администратор'),
-    )
-    email = models.EmailField(
-        'email',
-        unique=False,
     )
     bio = models.TextField(
         'Биография',
@@ -31,16 +27,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-
-    # def is_admin(self):
-    #     return (
-    #         self.role == ADMIN
-    #     )
-
-    # def is_moderator(self):
-    #     return (
-    #         self.role == MODERATOR
-    #     )
 
 
 class Category(models.Model):
