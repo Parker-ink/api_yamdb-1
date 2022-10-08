@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Avg
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status, mixins, viewsets, permissions, filters
+from rest_framework import status, mixins, viewsets, filters
 from django.core import mail
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
@@ -28,17 +28,24 @@ from .serializers import (
     TokenSerializer,
 )
 from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
+from rest_framework.decorators import action
+from django.db import IntegrityError
+
 
 
 @api_view(['POST'])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
-        user = User.objects.create(
-            username=serializer.data['username'],
-            email=serializer.data['email'],
-            is_active=0,
-        )
+        if serializer.data['username'] == 'me':
+            return Response('Username не может равняться me', status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user, obj = User.objects.get_or_create(
+                username=serializer.data['username'],
+                email=serializer.data['email'],
+            )
+        except IntegrityError:
+            return Response('Username и/или email уже есть в базе', status=status.HTTP_400_BAD_REQUEST)
         confirmation_code = default_token_generator.make_token(user)
         with mail.get_connection() as connection:
             mail.EmailMessage(
@@ -48,6 +55,8 @@ def signup(request):
                 [serializer.data['email']],
                 connection=connection,
             ).send()
+        User.objects.filter(
+            username=serializer.data['username']).update(is_active=0)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -61,6 +70,8 @@ def get_token(request):
         confirmation_code = serializer.data['confirmation_code']
         if default_token_generator.check_token(user, confirmation_code):
             token = RefreshToken.for_user(user)
+            User.objects.filter(
+                username=serializer.data['username']).update(is_active=1)
             return Response(
                 {'token': str(token.access_token)},
                 status=status.HTTP_200_OK
@@ -68,39 +79,32 @@ def get_token(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UsersViewSet(
-    mixins.CreateModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
-):
+class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAdmin,)
     pagination_class = LimitOffsetPagination
     search_fields = ('username',)
+    lookup_field = 'username'
 
+    @action(
+        detail=False, methods=['get', 'patch'],
+        url_path='me', permission_classes=(IsAuthenticated,)
+    )
+    def me(self, request):
+        if request.method == 'GET':
+            user = request.user
+            serializer = self.get_serializer(user, many=False)
+            return Response(serializer.data)
+        if request.method == 'PATCH':
+            instance = request.user
+            user = request.data
+            serializer = self.get_serializer(instance, user, many=False, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UserViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    viewsets.GenericViewSet
-):
-    serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, IsAdmin)
-
-    def get_queryset(self):
-        return get_object_or_404(
-            User, username=self.kwargs['username'])
-
-
-class MeViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    viewsets.GenericViewSet
-):
-    serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -131,7 +135,6 @@ class GenreViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     permission_classes = (
-
     )
 
 

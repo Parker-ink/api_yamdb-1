@@ -1,3 +1,4 @@
+from enum import unique
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -5,10 +6,14 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 class User(AbstractUser):
 
-    ROLES = (
-        ('user', 'Пользователь'),
-        ('moderator', 'Модератор'),
-        ('admin', 'Администратор'),
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
+    SUPERUSER = 1
+    USER_ROLES = (
+        (USER, 'Пользователь'),
+        (MODERATOR, 'Модератор'),
+        (ADMIN, 'Администратор'),
     )
     bio = models.TextField(
         'Биография',
@@ -17,12 +22,26 @@ class User(AbstractUser):
     role = models.CharField(
         'Роль',
         max_length=10,
-        choices=ROLES,
+        choices=USER_ROLES,
         default='user',
+    )
+    email = models.EmailField(
+        'email address',
+        unique=True
     )
 
     def __str__(self):
         return self.username
+
+    # def is_admin(self):
+    #     return (
+    #         self.role == ADMIN
+    #     )
+
+    # def is_moderator(self):
+    #     return (
+    #         self.role == MODERATOR
+    #     )
 
 
 class Category(models.Model):
