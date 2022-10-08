@@ -8,7 +8,6 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-<<<<<<< HEAD
 from reviews.models import (
     Category,
     Genre,
@@ -30,8 +29,6 @@ from .serializers import (
 from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, ReadOnly
 from rest_framework.decorators import action
 from django.db import IntegrityError
-=======
->>>>>>> develop
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 from api.permissions import IsAdmin
@@ -47,7 +44,6 @@ from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
-<<<<<<< HEAD
         if serializer.data['username'] == 'me':
             return Response('Username не может равняться me', status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -57,14 +53,6 @@ def signup(request):
             )
         except IntegrityError:
             return Response('Username и/или email уже есть в базе', status=status.HTTP_400_BAD_REQUEST)
-=======
-
-        user, obj = User.objects.get_or_create(
-            username=serializer.data['username'],
-            email=serializer.data['email'],
-        )
-
->>>>>>> develop
         confirmation_code = default_token_generator.make_token(user)
         with mail.get_connection() as connection:
             mail.EmailMessage(
