@@ -26,7 +26,7 @@ from .serializers import (
     UserSerializer,
     TokenSerializer,
 )
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, ReadOnly, IsAdminOrReadOnly
+from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, IsAdminOrReadOnly
 from rest_framework.decorators import action
 from django.db import IntegrityError
 
@@ -83,6 +83,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     search_fields = ('username',)
     lookup_field = 'username'
+    ordering_fields = ('role')
 
     @action(
         detail=False, methods=['get', 'patch'],
@@ -107,12 +108,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+    ordering_fields = ('pub_date')
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+    ordering_fields = ('pub_date')
 
 
 class CreateRetrieveViewSet(mixins.CreateModelMixin,
@@ -139,6 +142,7 @@ class GenreViewSet(CreateRetrieveViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
+    ordering_fields = ('name')
     permission_classes = (
         IsAdminOrReadOnly,
     )
@@ -149,6 +153,7 @@ class TitleViewSet(CreateRetrieveViewSet):
         Avg("reviews__score")
     ).order_by("name")
     serializer_class = TitleSerializer
+    ordering_fields = ('name')
     permission_classes = (
         IsAdminOrReadOnly,
     )
