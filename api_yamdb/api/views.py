@@ -16,7 +16,6 @@ from reviews.models import (
     Comment,
     User,
 )
-from .permissions import IsAdmin
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -27,7 +26,7 @@ from .serializers import (
     UserSerializer,
     TokenSerializer,
 )
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
+from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, ReadOnly
 from rest_framework.decorators import action
 from django.db import IntegrityError
 
@@ -125,7 +124,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     permission_classes = (
-
+        IsAdmin, ReadOnly,
     )
 
 
@@ -135,7 +134,7 @@ class GenreViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     permission_classes = (
-        
+        IsAdmin, ReadOnly,
     )
 
 
@@ -144,3 +143,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         Avg("reviews__score")
     ).order_by("name")
     serializer_class = TitleSerializer
+    permission_classes = (
+        IsAdmin, ReadOnly,
+    )
