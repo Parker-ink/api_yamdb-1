@@ -1,15 +1,5 @@
-"""
-Разрешения:
-
-IsAuthenticated - роль user? - Permission из коробки
-IsAuthorOrReadOnly - Если автор (отзыва, комментария), то можно разрешить
-    редактировать и удалять свои отзывы и комментарии, иначе - только читать
-IsModerator - роль moderator? - можно разрешить редактировать и удалять
-    чужие отзывы и комментарии
-IsAdmin - роль admin? - можно разрешить полный доступ
-"""
-
 from rest_framework import permissions
+
 from reviews.models import User
 
 
