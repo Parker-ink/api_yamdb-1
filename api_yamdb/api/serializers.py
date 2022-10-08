@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from reviews.models import User, Comment, Review, Category, Genre, Title
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class SignupSerializer(serializers.Serializer):
@@ -11,7 +11,7 @@ class SignupSerializer(serializers.Serializer):
         """
         Проверяем username на уникальность.
         """
-        if User.objects.filter(username=value, is_active=1).exists():
+        if User.objects.filter(username=value).exists():
             raise serializers.ValidationError(
                 "Такой username уже зарегистрирован")
         if value == 'me':
@@ -67,7 +67,7 @@ class UserSerializer(serializers.Serializer):
     )
 
     def create(self, validated_data):
-        return User.objects.create(**validated_data, is_active=0)
+        return User.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         instance.first_name = validated_data.get('first_name', instance.first_name)
