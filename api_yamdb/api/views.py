@@ -103,13 +103,6 @@ class UsersViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CreateRetrieveViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
-                            viewsets.GenericViewSet):
-    # В теле класса никакой код не нужен! Пустячок, а приятно.
-    pass 
-
-
-
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
