@@ -10,7 +10,6 @@ IsAdmin - роль admin? - можно разрешить полный дост�
 """
 
 from rest_framework import permissions
-
 from reviews.models import User
 
 
@@ -31,9 +30,9 @@ class IsAdmin(permissions.BasePermission):
     """Если роль admin, можно разрешить полный доступ"""
 
     def has_permission(self, request, view):
-        current_user = User.objects.filter(username=request.user.username)
         return (
-            current_user.role == 'admin' or current_user.is_superuser == 1
+            request.user.role == User.ADMIN
+            or request.user.is_superuser == User.SUPERUSER
         )
 
 
@@ -44,13 +43,11 @@ class IsModerator(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        current_user = User.objects.filter(username=request.user.username)
-        return (
-            current_user.role == 'moderator'
-        )
+        return request.user.role == User.MODERATOR
 
 
 class ReadOnly(permissions.BasePermission):
     """Пермишен только для просмотра доступный всем"""
+
     def has_permission(self, request, view):
         return request.method in permissions.SAFE_METHODS

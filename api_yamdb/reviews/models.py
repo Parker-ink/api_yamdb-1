@@ -1,13 +1,19 @@
+from enum import unique
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class User(AbstractUser):
 
-    ROLES = (
-        ('user', 'Пользователь'),
-        ('moderator', 'Модератор'),
-        ('admin', 'Администратор'),
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
+    SUPERUSER = 1
+    USER_ROLES = (
+        (USER, 'Пользователь'),
+        (MODERATOR, 'Модератор'),
+        (ADMIN, 'Администратор'),
     )
     bio = models.TextField(
         'Биография',
@@ -16,12 +22,26 @@ class User(AbstractUser):
     role = models.CharField(
         'Роль',
         max_length=10,
-        choices=ROLES,
+        choices=USER_ROLES,
         default='user',
+    )
+    email = models.EmailField(
+        'email address',
+        unique=True
     )
 
     def __str__(self):
         return self.username
+
+    # def is_admin(self):
+    #     return (
+    #         self.role == ADMIN
+    #     )
+
+    # def is_moderator(self):
+    #     return (
+    #         self.role == MODERATOR
+    #     )
 
 
 class Category(models.Model):
@@ -72,6 +92,13 @@ class Review(models.Model):
         verbose_name='Дата публикации',
         auto_now_add=True,
     )
+    score = models.PositiveSmallIntegerField(
+        verbose_name='Рейтинг',
+        validators=[
+            MinValueValidator(1, 'Допустимы значения от 1 до 10'),
+            MaxValueValidator(10, 'Допустимы значения от 1 до 10')
+        ]
+    )
 
     class Meta:
         verbose_name = 'Отзыв'
@@ -100,3 +127,30 @@ class Comment(models.Model):
     class Meta:
         verbose_name = 'Комментарий'
         ordering = ['pub_date']
+
+
+"""
+class RatingStar(models.Model):
+    value = models.SmallIntegerField("Значение", default=0)
+
+    def __str__(self):
+        return f'{self.value}'
+
+    class Meta:
+        verbose_name = "Звезда"
+        ordering = ["-value"]
+
+
+class Rating(models.Model):
+    ip = models.CharField("Ip адрес клиента", max_length=69)
+    star = models.ForeignKey(
+        RatingStar,
+        on_delete=models.CASCADE,
+        verbose_name='Звезда'
+    )
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        verbose_name='Произведение'
+    )
+"""
