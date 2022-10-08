@@ -30,10 +30,13 @@ class IsAdmin(permissions.BasePermission):
     """Если роль admin, можно разрешить полный доступ"""
 
     def has_permission(self, request, view):
-        return (
-            request.user.role == User.ADMIN
-            or request.user.is_superuser == User.SUPERUSER
-        )
+        if request.user.is_authenticated:
+            return (
+                request.user.role == User.ADMIN
+                or request.user.is_superuser == User.SUPERUSER
+            )
+        else:
+            return False
 
 
 class IsModerator(permissions.BasePermission):
@@ -43,7 +46,10 @@ class IsModerator(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        return request.user.role == User.MODERATOR
+        if request.user.is_authenticated:
+            return request.user.role == User.MODERATOR
+        else:
+            return False
 
 
 class ReadOnly(permissions.BasePermission):

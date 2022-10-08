@@ -1,4 +1,3 @@
-from enum import unique
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -15,6 +14,10 @@ class User(AbstractUser):
         (MODERATOR, 'Модератор'),
         (ADMIN, 'Администратор'),
     )
+    email = models.EmailField(
+        'email',
+        unique=False,
+    )
     bio = models.TextField(
         'Биография',
         blank=True,
@@ -24,10 +27,6 @@ class User(AbstractUser):
         max_length=10,
         choices=USER_ROLES,
         default='user',
-    )
-    email = models.EmailField(
-        'email address',
-        unique=True
     )
 
     def __str__(self):

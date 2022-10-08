@@ -26,6 +26,7 @@ from .serializers import (
     SignupSerializer,
     UserSerializer,
     TokenSerializer,
+    UserMePatchSerializer,
 )
 from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 from rest_framework.decorators import action
@@ -37,15 +38,13 @@ from django.db import IntegrityError
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
-        if serializer.data['username'] == 'me':
-            return Response('Username не может равняться me', status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user, obj = User.objects.get_or_create(
-                username=serializer.data['username'],
-                email=serializer.data['email'],
-            )
-        except IntegrityError:
-            return Response('Username и/или email уже есть в базе', status=status.HTTP_400_BAD_REQUEST)
+
+        user, obj = User.objects.get_or_create(
+            username=serializer.data['username'],
+            email=serializer.data['email'],
+            is_active=0,
+        )
+
         confirmation_code = default_token_generator.make_token(user)
         with mail.get_connection() as connection:
             mail.EmailMessage(
@@ -55,8 +54,6 @@ def signup(request):
                 [serializer.data['email']],
                 connection=connection,
             ).send()
-        User.objects.filter(
-            username=serializer.data['username']).update(is_active=0)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -99,12 +96,11 @@ class UsersViewSet(viewsets.ModelViewSet):
         if request.method == 'PATCH':
             instance = request.user
             user = request.data
-            serializer = self.get_serializer(instance, user, many=False, partial=True)
+            serializer = UserMePatchSerializer(instance, user, many=False, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -143,3 +139,62 @@ class TitleViewSet(viewsets.ModelViewSet):
         Avg("reviews__score")
     ).order_by("name")
     serializer_class = TitleSerializer
+
+
+
+
+
+    #     if serializer.data['username'] == 'me':
+    #         return Response(
+    #             'Username не может равняться me',
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+
+    #     if User.objects.filter(
+    #         username=serializer.data['username'],
+    #         email=serializer.data['email']
+    #     ).exists():
+    #         user = User.objects.filter(
+    #             username=serializer.data['username'],
+    #             email=serializer.data['email']
+    #         )
+    #         if user.is_active:
+    #             return Response(
+    #                 'Username и email уже есть в базе',
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+    #         else:
+
+        
+    #     try:
+    #         user = User.objects.create(username=serializer.data['username'])
+    #     except IntegrityError:
+    #         user = User.objects.get(username=serializer.data['username'])
+    #         if user.is_active:
+    #             return Response(
+    #                 'Username уже есть в базе',
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+
+    #     if User.objects.filter(email=serializer.data['email']).exists():
+    #         user = User.objects.get(email=serializer.data['email'])
+    #         if user.is_active:
+    #             return Response(
+    #                 'Email уже есть в базе',
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+
+    #     User.objects.filter(username=serializer.data['username']).update(
+    #         is_active=0, email=serializer.data['email'])
+
+    #     confirmation_code = default_token_generator.make_token(user)
+    #     with mail.get_connection() as connection:
+    #         mail.EmailMessage(
+    #             'confirmation_code',
+    #             f"{serializer.data['username']} - {confirmation_code}",
+    #             'as@sdasd.ru',
+    #             [serializer.data['email']],
+    #             connection=connection,
+    #         ).send()
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+    # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
