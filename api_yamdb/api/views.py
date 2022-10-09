@@ -1,34 +1,50 @@
-from django.contrib.auth.tokens import default_token_generator
-from django.core import mail
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, status, viewsets
-from rest_framework.decorators import action, api_view
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated
+from django.db.models import Avg
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status, mixins, viewsets, filters
+from django.core import mail
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import LimitOffsetPagination
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import RefreshToken
+from reviews.models import (
+    Category,
+    Genre,
+    Title,
+    Review,
+    Comment,
+    User,
+)
+from .serializers import (
+    CategorySerializer,
+    GenreSerializer,
+    TitleSerializer,
+    ReviewSerializer,
+    CommentSerializer,
+    SignupSerializer,
+    UserSerializer,
+    TokenSerializer,
+)
+from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, IsAdminOrReadOnly
+from rest_framework.decorators import action
+from django.db import IntegrityError
 
-from reviews.models import Category, Comment, Genre, Review, Title, User
-from api.permissions import IsAdmin
-from api.serializers import (CategorySerializer, CommentSerializer,
-                             GenreSerializer, ReviewSerializer,
-                             SignupSerializer, TitleSerializer,
-                             TokenSerializer, UserMePatchSerializer,
-                             UserSerializer)
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
 
 
 @api_view(['POST'])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
-
-        user, obj = User.objects.get_or_create(
-            username=serializer.data['username'],
-            email=serializer.data['email'],
-        )
-
+        if serializer.data['username'] == 'me':
+            return Response('Username не может равняться me', status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user, obj = User.objects.get_or_create(
+                username=serializer.data['username'],
+                email=serializer.data['email'],
+            )
+        except IntegrityError:
+            return Response('Username и/или email уже есть в базе', status=status.HTTP_400_BAD_REQUEST)
         confirmation_code = default_token_generator.make_token(user)
         with mail.get_connection() as connection:
             mail.EmailMessage(
@@ -38,6 +54,8 @@ def signup(request):
                 [serializer.data['email']],
                 connection=connection,
             ).send()
+        User.objects.filter(
+            username=serializer.data['username']).update(is_active=0)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -65,6 +83,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     search_fields = ('username',)
     lookup_field = 'username'
+    ordering_fields = ('role')
 
     @action(
         detail=False, methods=['get', 'patch'],
@@ -78,7 +97,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         if request.method == 'PATCH':
             instance = request.user
             user = request.data
-            serializer = UserMePatchSerializer(instance, user, many=False, partial=True)
+            serializer = self.get_serializer(instance, user, many=False, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -89,94 +108,53 @@ class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+    ordering_fields = ('pub_date')
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+    ordering_fields = ('pub_date')
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CreateRetrieveViewSet(mixins.CreateModelMixin,
+                 mixins.DestroyModelMixin,
+                 mixins.ListModelMixin,
+                 viewsets.GenericViewSet):
+    pass 
+
+class CategoryViewSet(CreateRetrieveViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    lookup_field = 'slug'
+    ordering_fields = ('name')
     permission_classes = (
-
+        IsAdminOrReadOnly,
     )
+    
 
-
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(CreateRetrieveViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    lookup_field = 'slug'
+    ordering_fields = ('name')
     permission_classes = (
+        IsAdminOrReadOnly,
     )
 
 
-class TitleViewSet(viewsets.ModelViewSet):
+class TitleViewSet(CreateRetrieveViewSet):
     queryset = Title.objects.all().annotate(
         Avg("reviews__score")
     ).order_by("name")
     serializer_class = TitleSerializer
-
-
-
-
-
-    #     if serializer.data['username'] == 'me':
-    #         return Response(
-    #             'Username не может равняться me',
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-
-    #     if User.objects.filter(
-    #         username=serializer.data['username'],
-    #         email=serializer.data['email']
-    #     ).exists():
-    #         user = User.objects.filter(
-    #             username=serializer.data['username'],
-    #             email=serializer.data['email']
-    #         )
-    #         if user.is_active:
-    #             return Response(
-    #                 'Username и email уже есть в базе',
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-    #         else:
-
-        
-    #     try:
-    #         user = User.objects.create(username=serializer.data['username'])
-    #     except IntegrityError:
-    #         user = User.objects.get(username=serializer.data['username'])
-    #         if user.is_active:
-    #             return Response(
-    #                 'Username уже есть в базе',
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-
-    #     if User.objects.filter(email=serializer.data['email']).exists():
-    #         user = User.objects.get(email=serializer.data['email'])
-    #         if user.is_active:
-    #             return Response(
-    #                 'Email уже есть в базе',
-    #                 status=status.HTTP_400_BAD_REQUEST
-    #             )
-
-    #     User.objects.filter(username=serializer.data['username']).update(
-    #         is_active=0, email=serializer.data['email'])
-
-    #     confirmation_code = default_token_generator.make_token(user)
-    #     with mail.get_connection() as connection:
-    #         mail.EmailMessage(
-    #             'confirmation_code',
-    #             f"{serializer.data['username']} - {confirmation_code}",
-    #             'as@sdasd.ru',
-    #             [serializer.data['email']],
-    #             connection=connection,
-    #         ).send()
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
-    # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    ordering_fields = ('name')
+    permission_classes = (
+        IsAdminOrReadOnly,
+    )
+    
