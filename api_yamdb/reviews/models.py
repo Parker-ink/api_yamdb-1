@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 
 class User(AbstractUser):
@@ -28,16 +28,6 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-    # def is_admin(self):
-    #     return (
-    #         self.role == ADMIN
-    #     )
-
-    # def is_moderator(self):
-    #     return (
-    #         self.role == MODERATOR
-    #     )
-
 
 class Category(models.Model):
     name = models.CharField(max_length=256)
@@ -58,15 +48,18 @@ class Genre(models.Model):
 class Title(models.Model):
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE,
-        related_name='category'
+        on_delete=models.PROTECT,
+        related_name='categories'
     )
-    genre = models.ForeignKey(
+    description = models.TextField(
+        blank=True
+    )
+    genre = models.ManyToManyField(
         Genre,
-        on_delete=models.CASCADE
+        related_name='genre'
     )
     name = models.CharField(max_length=256)
-    year = models.IntegerField()
+    year = models.IntegerField(default='2000')
 
 
 class Review(models.Model):

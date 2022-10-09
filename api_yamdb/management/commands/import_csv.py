@@ -1,9 +1,10 @@
 import csv
 import os
+
 from django.conf import BASE_DIR
 from django.core.management.base import BaseCommand
 
-from reviews.models import User, Title, Review, Genre, Comment, Category
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class Command(BaseCommand):
@@ -19,7 +20,7 @@ class Command(BaseCommand):
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if file_name == 'users.csv':
-                    User.objects.create(**row)  # // можно заменить распаковкой словаря, примерно так User.objects.create(**row) - надо над этим подумать
+                    User.objects.create(**row)
                 elif file_name == 'titles.csv':
                     Title.objects.create(**row)
                 elif file_name == 'review.csv':

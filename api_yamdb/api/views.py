@@ -16,7 +16,6 @@ from reviews.models import (
     Comment,
     User,
 )
-from .permissions import IsAdmin
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -26,8 +25,14 @@ from .serializers import (
     SignupSerializer,
     UserSerializer,
     TokenSerializer,
+    UserMePatchSerializer,
 )
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator
+from api.permissions import (
+    IsAdmin,
+    IsAuthorOrReadOnly,
+    IsModerator,
+    IsAdminOrReadOnly
+)
 from rest_framework.decorators import action
 from django.db import IntegrityError
 
@@ -70,8 +75,6 @@ def get_token(request):
         confirmation_code = serializer.data['confirmation_code']
         if default_token_generator.check_token(user, confirmation_code):
             token = RefreshToken.for_user(user)
-            User.objects.filter(
-                username=serializer.data['username']).update(is_active=1)
             return Response(
                 {'token': str(token.access_token)},
                 status=status.HTTP_200_OK
@@ -86,6 +89,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     search_fields = ('username',)
     lookup_field = 'username'
+    ordering_fields = ('role')
 
     @action(
         detail=False, methods=['get', 'patch'],
@@ -99,7 +103,8 @@ class UsersViewSet(viewsets.ModelViewSet):
         if request.method == 'PATCH':
             instance = request.user
             user = request.data
-            serializer = self.get_serializer(instance, user, many=False, partial=True)
+            serializer = UserMePatchSerializer(
+                instance, user, many=False, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -110,35 +115,54 @@ class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+    ordering_fields = ('pub_date')
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+    ordering_fields = ('pub_date')
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CreateRetrieveViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet):
+    pass
+
+
+class CategoryViewSet(CreateRetrieveViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    lookup_field = 'slug'
+    ordering_fields = ('name')
     permission_classes = (
-
+        IsAdminOrReadOnly,
     )
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(CreateRetrieveViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
+    lookup_field = 'slug'
+    ordering_fields = ('name')
     permission_classes = (
+        IsAdminOrReadOnly,
     )
 
 
-class TitleViewSet(viewsets.ModelViewSet):
+class TitleViewSet(CreateRetrieveViewSet):
     queryset = Title.objects.all().annotate(
         Avg("reviews__score")
     ).order_by("name")
     serializer_class = TitleSerializer
+    ordering_fields = ('name')
+    permission_classes = (
+        IsAdminOrReadOnly,
+    )
