@@ -25,26 +25,28 @@ from .serializers import (
     SignupSerializer,
     UserSerializer,
     TokenSerializer,
+    UserMePatchSerializer,
 )
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, IsAdminOrReadOnly
+from api.permissions import (
+    IsAdmin,
+    IsAuthorOrReadOnly,
+    IsModerator,
+    IsAdminOrReadOnly
+)
 from rest_framework.decorators import action
 from django.db import IntegrityError
-
 
 
 @api_view(['POST'])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
-        if serializer.data['username'] == 'me':
-            return Response('Username не может равняться me', status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user, obj = User.objects.get_or_create(
-                username=serializer.data['username'],
-                email=serializer.data['email'],
-            )
-        except IntegrityError:
-            return Response('Username и/или email уже есть в базе', status=status.HTTP_400_BAD_REQUEST)
+
+        user, obj = User.objects.get_or_create(
+            username=serializer.data['username'],
+            email=serializer.data['email'],
+        )
+
         confirmation_code = default_token_generator.make_token(user)
         with mail.get_connection() as connection:
             mail.EmailMessage(
@@ -54,8 +56,6 @@ def signup(request):
                 [serializer.data['email']],
                 connection=connection,
             ).send()
-        User.objects.filter(
-            username=serializer.data['username']).update(is_active=0)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -83,7 +83,6 @@ class UsersViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     search_fields = ('username',)
     lookup_field = 'username'
-    ordering_fields = ('role')
 
     @action(
         detail=False, methods=['get', 'patch'],
@@ -97,7 +96,8 @@ class UsersViewSet(viewsets.ModelViewSet):
         if request.method == 'PATCH':
             instance = request.user
             user = request.data
-            serializer = self.get_serializer(instance, user, many=False, partial=True)
+            serializer = UserMePatchSerializer(
+                instance, user, many=False, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -118,11 +118,13 @@ class CommentViewSet(viewsets.ModelViewSet):
     ordering_fields = ('pub_date')
 
 
-class CreateRetrieveViewSet(mixins.CreateModelMixin,
-                 mixins.DestroyModelMixin,
-                 mixins.ListModelMixin,
-                 viewsets.GenericViewSet):
-    pass 
+class CreateRetrieveViewSet(
+        mixins.CreateModelMixin,
+        mixins.DestroyModelMixin,
+        mixins.ListModelMixin,
+        viewsets.GenericViewSet):
+    pass
+
 
 class CategoryViewSet(CreateRetrieveViewSet):
     queryset = Category.objects.all()
@@ -134,7 +136,7 @@ class CategoryViewSet(CreateRetrieveViewSet):
     permission_classes = (
         IsAdminOrReadOnly,
     )
-    
+
 
 class GenreViewSet(CreateRetrieveViewSet):
     queryset = Genre.objects.all()
@@ -153,8 +155,3 @@ class TitleViewSet(CreateRetrieveViewSet):
         Avg("reviews__score")
     ).order_by("name")
     serializer_class = TitleSerializer
-    ordering_fields = ('name')
-    permission_classes = (
-        IsAdminOrReadOnly,
-    )
-    
