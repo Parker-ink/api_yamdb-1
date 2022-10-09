@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework_simplejwt.tokens import RefreshToken
+from .filters import TitleFilter
 from reviews.models import (
     Category,
     Genre,
@@ -16,10 +17,12 @@ from reviews.models import (
     Comment,
     User,
 )
+from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
-    TitleSerializer,
+    TitleReadSerializer,
+    TitleWriteSerializer,
     ReviewSerializer,
     CommentSerializer,
     SignupSerializer,
@@ -149,8 +152,17 @@ class GenreViewSet(CreateRetrieveViewSet):
     )
 
 
-class TitleViewSet(CreateRetrieveViewSet):
+class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         Avg("reviews__score")
     ).order_by("name")
-    serializer_class = TitleSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+    permission_classes = (
+        IsAdminOrReadOnly,
+    )
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
+        return TitleWriteSerializer
