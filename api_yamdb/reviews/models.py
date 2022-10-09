@@ -115,30 +115,3 @@ class Comment(models.Model):
     class Meta:
         verbose_name = 'Комментарий'
         ordering = ['pub_date']
-
-
-"""
-class RatingStar(models.Model):
-    value = models.SmallIntegerField("Значение", default=0)
-
-    def __str__(self):
-        return f'{self.value}'
-
-    class Meta:
-        verbose_name = "Звезда"
-        ordering = ["-value"]
-
-
-class Rating(models.Model):
-    ip = models.CharField("Ip адрес клиента", max_length=69)
-    star = models.ForeignKey(
-        RatingStar,
-        on_delete=models.CASCADE,
-        verbose_name='Звезда'
-    )
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        verbose_name='Произведение'
-    )
-"""
