@@ -34,7 +34,6 @@ from api.permissions import (
     IsAdminOrReadOnly
 )
 from rest_framework.decorators import action
-from django.db import IntegrityError
 
 
 @api_view(['POST'])
