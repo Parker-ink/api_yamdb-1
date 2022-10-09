@@ -20,7 +20,7 @@ class Command(BaseCommand):
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if file_name == 'users.csv':
-                    User.objects.create(**row)  # // можно заменить распаковкой словаря, примерно так User.objects.create(**row) - надо над этим подумать
+                    User.objects.create(**row)
                 elif file_name == 'titles.csv':
                     Title.objects.create(**row)
                 elif file_name == 'review.csv':

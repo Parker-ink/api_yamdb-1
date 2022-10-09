@@ -25,8 +25,14 @@ from .serializers import (
     SignupSerializer,
     UserSerializer,
     TokenSerializer,
+    UserMePatchSerializer,
 )
-from api.permissions import IsAdmin, IsAuthorOrReadOnly, IsModerator, IsAdminOrReadOnly
+from api.permissions import (
+    IsAdmin,
+    IsAuthorOrReadOnly,
+    IsModerator,
+    IsAdminOrReadOnly
+)
 from rest_framework.decorators import action
 from django.db import IntegrityError
 
@@ -97,7 +103,8 @@ class UsersViewSet(viewsets.ModelViewSet):
         if request.method == 'PATCH':
             instance = request.user
             user = request.data
-            serializer = self.get_serializer(instance, user, many=False, partial=True)
+            serializer = UserMePatchSerializer(
+                instance, user, many=False, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -118,11 +125,13 @@ class CommentViewSet(viewsets.ModelViewSet):
     ordering_fields = ('pub_date')
 
 
-class CreateRetrieveViewSet(mixins.CreateModelMixin,
-                 mixins.DestroyModelMixin,
-                 mixins.ListModelMixin,
-                 viewsets.GenericViewSet):
-    pass 
+class CreateRetrieveViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet):
+    pass
+
 
 class CategoryViewSet(CreateRetrieveViewSet):
     queryset = Category.objects.all()
@@ -134,7 +143,7 @@ class CategoryViewSet(CreateRetrieveViewSet):
     permission_classes = (
         IsAdminOrReadOnly,
     )
-    
+
 
 class GenreViewSet(CreateRetrieveViewSet):
     queryset = Genre.objects.all()
@@ -157,4 +166,3 @@ class TitleViewSet(CreateRetrieveViewSet):
     permission_classes = (
         IsAdminOrReadOnly,
     )
-    
