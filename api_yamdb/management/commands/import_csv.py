@@ -11,7 +11,11 @@ class Command(BaseCommand):
     help = u'Загрузка информации из csv-файла в базу данных'
 
     def add_arguments(self, parser):
-        parser.add_argument('file_name', type=str, help=u'Имя файла без расширения')
+        parser.add_argument(
+            'file_name',
+            type=str,
+            help=u'Имя файла без расширения'
+        )
 
     def handle(self, *args, **kwargs):
         file_name = f"{kwargs['file_name']}.csv"
