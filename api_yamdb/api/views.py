@@ -108,8 +108,8 @@ class UsersViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = [IsAdminModeratorAuthorOrReadOnly,
-                          IsAuthenticatedOrReadOnly]
+    permission_classes = (IsAdminModeratorAuthorOrReadOnly,
+                          IsAuthenticatedOrReadOnly)
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
@@ -124,8 +124,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsAdminModeratorAuthorOrReadOnly,
-                          IsAuthenticatedOrReadOnly]
+    permission_classes = (IsAdminModeratorAuthorOrReadOnly,
+                          IsAuthenticatedOrReadOnly)
 
     def get_queryset(self):
         review = get_object_or_404(Review, pk=self.kwargs.get("review_id"))
@@ -153,9 +153,7 @@ class CategoryViewSet(CreateRetrieveViewSet):
     search_fields = ('name',)
     lookup_field = 'slug'
     ordering_fields = ('name')
-    permission_classes = (
-        IsAdminOrReadOnly,
-    )
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class GenreViewSet(CreateRetrieveViewSet):
@@ -165,9 +163,7 @@ class GenreViewSet(CreateRetrieveViewSet):
     search_fields = ('name',)
     lookup_field = 'slug'
     ordering_fields = ('name')
-    permission_classes = (
-        IsAdminOrReadOnly,
-    )
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -176,9 +172,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     ).order_by("name")
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-    permission_classes = (
-        IsAdminOrReadOnly,
-    )
+    permission_classes = (IsAdminOrReadOnly,)
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
