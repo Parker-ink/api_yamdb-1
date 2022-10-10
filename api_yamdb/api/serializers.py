@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
@@ -9,7 +11,8 @@ class SignupSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         """
-        Проверяем username на уникальность.
+        Проверяем username на уникальность
+        и что не равен me.
         """
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError(
@@ -41,7 +44,7 @@ class UserMePatchSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=150, required=False)
     bio = serializers.CharField(required=False)
     role = serializers.ChoiceField(
-        choices=['user', 'moderator', 'admin'],
+        choices=('user', 'moderator', 'admin'),
         default='user',
         required=False
     )
@@ -124,6 +127,18 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    def validate(self, data):
+        request = self.context['request']
+        author = request.user
+        title_id = self.context['view'].kwargs.get('title_id')
+        title = get_object_or_404(Title, pk=title_id)
+        if (
+            request.method == 'POST'
+            and Review.objects.filter(title=title, author=author).exists()
+        ):
+            raise ValidationError('Нельзя добавить более одного отзыва')
+        return data
+
     class Meta:
         model = Review
         fields = '__all__'
@@ -143,8 +158,29 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleWriteSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', many=True,
+        queryset=Genre.objects.all()
+    )
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
 
     class Meta:
         model = Title
-        fields = ('category', 'genre', 'name', 'year')
+        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+
+
+class TitleReadSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(
+        source='reviews__score__avg', read_only=True
+    )
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        model = Title
+        fields = ('id', 'name', 'year',
+                  'rating', 'description', 'genre', 'category')

@@ -78,7 +78,7 @@ class Review(models.Model):
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
-        auto_now_add=True,
+        auto_now_add=True
     )
     score = models.PositiveSmallIntegerField(
         verbose_name='Рейтинг',
@@ -91,6 +91,12 @@ class Review(models.Model):
     class Meta:
         verbose_name = 'Отзыв'
         ordering = ['pub_date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_review'
+            ),
+        ]
 
 
 class Comment(models.Model):
@@ -115,30 +121,3 @@ class Comment(models.Model):
     class Meta:
         verbose_name = 'Комментарий'
         ordering = ['pub_date']
-
-
-"""
-class RatingStar(models.Model):
-    value = models.SmallIntegerField("Значение", default=0)
-
-    def __str__(self):
-        return f'{self.value}'
-
-    class Meta:
-        verbose_name = "Звезда"
-        ordering = ["-value"]
-
-
-class Rating(models.Model):
-    ip = models.CharField("Ip адрес клиента", max_length=69)
-    star = models.ForeignKey(
-        RatingStar,
-        on_delete=models.CASCADE,
-        verbose_name='Звезда'
-    )
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        verbose_name='Произведение'
-    )
-"""
