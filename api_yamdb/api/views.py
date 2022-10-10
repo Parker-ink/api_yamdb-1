@@ -1,23 +1,30 @@
-from django.contrib.auth.tokens import default_token_generator
-from django.core import mail
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from rest_framework import status, mixins, viewsets, filters
-from rest_framework.decorators import action, api_view
-from rest_framework.permissions import IsAuthenticated
+from django.db.models import Avg
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from api.permissions import (
-    IsAdmin,
-    IsAuthorOrReadOnly,
-    IsModerator,
-    IsAdminOrReadOnly
+from rest_framework import status, mixins, viewsets, filters
+from django.core import mail
+from rest_framework.permissions import (
+    IsAuthenticated, IsAuthenticatedOrReadOnly
 )
-from api.serializers import (
+from rest_framework.pagination import LimitOffsetPagination
+from django.contrib.auth.tokens import default_token_generator
+from rest_framework_simplejwt.tokens import RefreshToken
+from .filters import TitleFilter
+from reviews.models import (
+    Category,
+    Genre,
+    Title,
+    Review,
+    User,
+)
+from django_filters.rest_framework import DjangoFilterBackend
+
+from .serializers import (
     CategorySerializer,
     GenreSerializer,
-    TitleSerializer,
+    TitleReadSerializer,
+    TitleWriteSerializer,
     ReviewSerializer,
     CommentSerializer,
     SignupSerializer,
@@ -25,14 +32,12 @@ from api.serializers import (
     TokenSerializer,
     UserMePatchSerializer,
 )
-from reviews.models import (
-    Category,
-    Genre,
-    Title,
-    Review,
-    Comment,
-    User,
+from api.permissions import (
+    IsAdmin,
+    IsAdminOrReadOnly,
+    IsAdminModeratorAuthorOrReadOnly
 )
+from rest_framework.decorators import action
 
 
 @api_view(['POST'])
@@ -50,7 +55,7 @@ def signup(request):
             mail.EmailMessage(
                 'confirmation_code',
                 f"{serializer.data['username']} - {confirmation_code}",
-                'noreply@noreply.ru',
+                'as@sdasd.ru',
                 [serializer.data['email']],
                 connection=connection,
             ).send()
@@ -78,6 +83,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAdmin,)
+    pagination_class = LimitOffsetPagination
     search_fields = ('username',)
     lookup_field = 'username'
 
@@ -86,31 +92,51 @@ class UsersViewSet(viewsets.ModelViewSet):
         url_path='me', permission_classes=(IsAuthenticated,)
     )
     def me(self, request):
-        instance = request.user
         if request.method == 'GET':
-            serializer = self.get_serializer(instance, many=False)
+            user = request.user
+            serializer = self.get_serializer(user, many=False)
             return Response(serializer.data)
-        user = request.data
-        serializer = UserMePatchSerializer(
-            instance, user, many=False, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+        if request.method == 'PATCH':
+            instance = request.user
+            user = request.data
+            serializer = UserMePatchSerializer(
+                instance, user, many=False, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthorOrReadOnly, IsAdmin, IsModerator,)
-    ordering_fields = ('pub_date',)
+    permission_classes = [IsAdminModeratorAuthorOrReadOnly,
+                          IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
+
+        return title.reviews.all()
+
+    def perform_create(self, serializer):
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, id=title_id)
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthorOrReadOnly, IsAdmin, IsModerator,)
-    ordering_fields = ('pub_date',)
+    permission_classes = [IsAdminModeratorAuthorOrReadOnly,
+                          IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        review = get_object_or_404(Review, pk=self.kwargs.get("review_id"))
+        return review.comments.all()
+
+    def perform_create(self, serializer):
+        title_id = self.kwargs.get('title_id')
+        review_id = self.kwargs.get('review_id')
+        review = get_object_or_404(Review, id=review_id, title=title_id)
+        serializer.save(author=self.request.user, review=review)
 
 
 class CreateRetrieveViewSet(
@@ -127,7 +153,7 @@ class CategoryViewSet(CreateRetrieveViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    ordering_fields = ('name',)
+    ordering_fields = ('name')
     permission_classes = (
         IsAdminOrReadOnly,
     )
@@ -139,14 +165,23 @@ class GenreViewSet(CreateRetrieveViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    ordering_fields = ('name',)
+    ordering_fields = ('name')
     permission_classes = (
         IsAdminOrReadOnly,
     )
 
 
-class TitleViewSet(CreateRetrieveViewSet):
+class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         Avg("reviews__score")
     ).order_by("name")
-    serializer_class = TitleSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+    permission_classes = (
+        IsAdminOrReadOnly,
+    )
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
+        return TitleWriteSerializer
