@@ -9,7 +9,8 @@ class SignupSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         """
-        Проверяем username на уникальность.
+        Проверяем username на уникальность
+        и что не равен me.
         """
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError(
@@ -41,7 +42,7 @@ class UserMePatchSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=150, required=False)
     bio = serializers.CharField(required=False)
     role = serializers.ChoiceField(
-        choices=['user', 'moderator', 'admin'],
+        choices=('user', 'moderator', 'admin'),
         default='user',
         required=False
     )
