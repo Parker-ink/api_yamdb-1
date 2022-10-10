@@ -109,7 +109,7 @@ class UsersViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthorOrReadOnly, IsAdmin, IsModerator]
+    permission_classes = [IsAuthorOrReadOnly, IsAdminOrReadOnly, IsModerator]
     ordering_fields = ('pub_date')
 
 
@@ -124,7 +124,8 @@ class CreateRetrieveViewSet(
         mixins.CreateModelMixin,
         mixins.DestroyModelMixin,
         mixins.ListModelMixin,
-        viewsets.GenericViewSet):
+        viewsets.GenericViewSet
+        ):
     pass
 
 
