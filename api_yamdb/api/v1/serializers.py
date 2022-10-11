@@ -178,7 +178,8 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
 class TitleReadSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(
-        read_only=True
+        read_only=True,
+        source='reviews__score__avg'
     )
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
