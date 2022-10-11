@@ -112,9 +112,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
                           IsAuthenticatedOrReadOnly)
 
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
-
-        return title.reviews.all()
+        title_id = self.kwargs.get("title_id")
+        new_queryset = Review.objects.filter(title=title_id)
+        return new_queryset
 
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
