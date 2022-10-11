@@ -36,8 +36,8 @@ from reviews.models import (
     Genre,
     Title,
     Review,
-    User,
 )
+from users.models import User
 
 
 @api_view(['POST'])
