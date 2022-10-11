@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -12,24 +14,11 @@ class SignupSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         """
-        Проверяем username на уникальность
-        и что не равен me.
+        Проверяем, что username не равен me.
         """
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError(
-                "Такой username уже зарегистрирован")
-        if value == 'me':
+        if value.lower() == settings.UNUSED_USERNAME:
             raise serializers.ValidationError(
                 "Username не может быть me")
-        return value
-
-    def validate_email(self, value):
-        """
-        Проверяем email на уникальность.
-        """
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                "Такой email уже зарегистрирован")
         return value
 
 
@@ -38,69 +27,18 @@ class TokenSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
 
 
-class UserMePatchSerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=254)
-    username = serializers.CharField(max_length=150)
-    first_name = serializers.CharField(max_length=150, required=False)
-    last_name = serializers.CharField(max_length=150, required=False)
-    bio = serializers.CharField(required=False)
+class UserSerializer(serializers.ModelSerializer):
     role = serializers.ChoiceField(
         choices=('user', 'moderator', 'admin'),
         default='user',
-        required=False
     )
 
-    def update(self, instance, validated_data):
-        instance.first_name = validated_data.get(
-            'first_name', instance.first_name)
-        instance.last_name = validated_data.get(
-            'last_name', instance.last_name)
-        instance.bio = validated_data.get('bio', instance.bio)
-        instance.save()
-        return instance
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
 
-
-class UserSerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=254)
-    username = serializers.CharField(max_length=150)
-    first_name = serializers.CharField(max_length=150, required=False)
-    last_name = serializers.CharField(max_length=150, required=False)
-    bio = serializers.CharField(required=False)
-    role = serializers.ChoiceField(
-        choices=['user', 'moderator', 'admin'],
-        default='user',
-        required=False
-    )
-
-    def create(self, validated_data):
-        return User.objects.create(**validated_data)
-
-    def update(self, instance, validated_data):
-        instance.first_name = validated_data.get(
-            'first_name', instance.first_name)
-        instance.last_name = validated_data.get(
-            'last_name', instance.last_name)
-        instance.bio = validated_data.get('bio', instance.bio)
-        instance.save()
-        return instance
-
-    def validate_username(self, value):
-        """
-        Проверяем username на уникальность.
-        """
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError(
-                "Такой username уже зарегистрирован")
-        return value
-
-    def validate_email(self, value):
-        """
-        Проверяем email на уникальность.
-        """
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                "Такой email уже зарегистрирован")
-        return value
 
 
 class CommentSerializer(serializers.ModelSerializer):

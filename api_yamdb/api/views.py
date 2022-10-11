@@ -1,5 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
+from django.db import IntegrityError
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -17,7 +18,7 @@ from api.filters import TitleFilter
 from api.permissions import (
     IsAdmin,
     IsAdminOrReadOnly,
-    IsAdminModeratorAuthorOrReadOnly
+    IsAuthorModeratorAdminOrReadOnly
 )
 from api.serializers import (
     CategorySerializer,
@@ -29,7 +30,7 @@ from api.serializers import (
     SignupSerializer,
     UserSerializer,
     TokenSerializer,
-    UserMePatchSerializer,
+    # UserMePatchSerializer,
 )
 from reviews.models import (
     Category,
@@ -40,15 +41,21 @@ from reviews.models import (
 from users.models import User
 
 
-@api_view(['POST'])
+@api_view(('POST',))
 def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
 
-        user, obj = User.objects.get_or_create(
-            username=serializer.data['username'],
-            email=serializer.data['email'],
-        )
+        try:
+            user, obj = User.objects.get_or_create(
+                username=serializer.data['username'],
+                email=serializer.data['email'],
+            )
+        except IntegrityError:
+            return Response(
+                'Такой пары username-email нет в базе данных',
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         confirmation_code = default_token_generator.make_token(user)
         with mail.get_connection() as connection:
@@ -63,7 +70,7 @@ def signup(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(('POST',))
 def get_token(request):
     serializer = TokenSerializer(data=request.data)
     if serializer.is_valid():
@@ -92,23 +99,27 @@ class UsersViewSet(viewsets.ModelViewSet):
     )
     def me(self, request):
         if request.method == 'GET':
-            user = request.user
-            serializer = self.get_serializer(user, many=False)
+            serializer = self.get_serializer(request.user, many=False)
             return Response(serializer.data)
         if request.method == 'PATCH':
             instance = request.user
-            user = request.data
-            serializer = UserMePatchSerializer(
-                instance, user, many=False, partial=True)
+            user_data = request.data
+            serializer = self.get_serializer(
+                instance, user_data, many=False, partial=True
+            )
             if serializer.is_valid():
+                serializer.validated_data['role'] = instance.role
                 serializer.save()
                 return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAdminModeratorAuthorOrReadOnly,
+    permission_classes = (IsAuthorModeratorAdminOrReadOnly,
                           IsAuthenticatedOrReadOnly)
 
     def get_queryset(self):
@@ -124,7 +135,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsAdminModeratorAuthorOrReadOnly,
+    permission_classes = (IsAuthorModeratorAdminOrReadOnly,
                           IsAuthenticatedOrReadOnly)
 
     def get_queryset(self):
