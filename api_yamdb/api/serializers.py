@@ -102,6 +102,8 @@ class UserSerializer(serializers.Serializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """
+    """
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
@@ -123,7 +125,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         if request.method != 'POST':
             return data
         author = request.user
-        title_id = self.context['view'].kwargs['title_id']
+        title_id = self.context['request'].parser_context['kwargs']['title_id']
         if (
             Review.objects.filter(title_id=title_id,
                                   author=author).exists()
