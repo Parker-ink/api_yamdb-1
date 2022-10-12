@@ -13,7 +13,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from api.filters import TitleFilter
 from api.permissions import (
@@ -79,7 +79,7 @@ def get_token(request):
     confirmation_code = serializer.validated_data['confirmation_code']
     if not default_token_generator.check_token(user, confirmation_code):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    token = RefreshToken.for_user(user)
+    token = AccessToken.for_user(user)
     return Response(
         {'token': str(token.access_token)},
         status=status.HTTP_200_OK
