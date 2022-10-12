@@ -30,10 +30,16 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
-        related_name='genre'
+        related_name='genre',
+        through="GenreTitle"
     )
     name = models.CharField(max_length=256)
     year = models.IntegerField(default='2000')
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
 
 class Review(models.Model):
