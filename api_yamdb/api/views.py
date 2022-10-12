@@ -109,6 +109,9 @@ class UsersViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    """
+    Работа с информацией обзора на произведение.
+    """
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = (IsAdminModeratorAuthorOrReadOnly,
@@ -130,6 +133,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    """
+    Работа с информацией комментария на обзор произведения.
+    """
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = (IsAdminModeratorAuthorOrReadOnly,
