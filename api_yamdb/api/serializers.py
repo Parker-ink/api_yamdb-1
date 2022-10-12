@@ -103,6 +103,7 @@ class UserSerializer(serializers.Serializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     """
+    Класс для сериализации данных Comment.
     """
     author = serializers.SlugRelatedField(
         slug_field='username',
@@ -115,6 +116,12 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """
+    Класс для сериализации Review.
+    Проверяет с использованием валидации,
+    что при POST запросе от одного пользователя,
+    будет создан всего один обзор на одно произведение.
+    """
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True

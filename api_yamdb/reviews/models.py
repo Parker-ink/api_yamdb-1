@@ -63,6 +63,9 @@ class Title(models.Model):
 
 
 class Review(models.Model):
+    """
+    Модель для создания обзора для произведения.
+    """
     text = models.TextField(verbose_name='Текст')
     author = models.ForeignKey(
         User,
@@ -103,6 +106,9 @@ class Review(models.Model):
 
 
 class Comment(models.Model):
+    """
+    Модель для создания комментария на обзоры произведений.
+    """
     text = models.TextField(verbose_name='Текст')
     review = models.ForeignKey(
         Review,
