@@ -9,6 +9,9 @@ from users.models import User
 
 
 class SignupSerializer(serializers.Serializer):
+    """
+    Сериализатор: регистрация пользователя.
+    """
     email = serializers.EmailField(max_length=254)
     username = serializers.CharField(max_length=150)
 
@@ -23,11 +26,17 @@ class SignupSerializer(serializers.Serializer):
 
 
 class TokenSerializer(serializers.Serializer):
+    """
+    Сериализатор: получение токена авторизации.
+    """
     confirmation_code = serializers.CharField(max_length=50)
     username = serializers.CharField(max_length=150)
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор модели User.
+    """
     role = serializers.ChoiceField(
         choices=('user', 'moderator', 'admin'),
         default='user',

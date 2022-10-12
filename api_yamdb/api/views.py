@@ -13,7 +13,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import TitleFilter
 from api.permissions import (
@@ -44,6 +44,9 @@ from users.models import User
 
 @api_view(('POST',))
 def signup(request):
+    """
+    Регистрация пользователя с отправкой кода подтверждения на почту.
+    """
     serializer = SignupSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
@@ -72,6 +75,9 @@ def signup(request):
 
 @api_view(('POST',))
 def get_token(request):
+    """
+    Получение токена авторизации.
+    """
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = get_object_or_404(
@@ -87,6 +93,9 @@ def get_token(request):
 
 
 class UsersViewSet(viewsets.ModelViewSet):
+    """
+    Работа с информацией о пользователях.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAdmin,)

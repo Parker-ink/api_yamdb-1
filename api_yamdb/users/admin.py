@@ -5,6 +5,10 @@ from users.models import User
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
+    """
+    Представление юзеров в админ-панели.
+    """
+
     list_display = (
         'username',
         'email',
