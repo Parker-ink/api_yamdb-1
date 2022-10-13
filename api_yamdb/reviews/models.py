@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.timezone import now
 
 
 class User(AbstractUser):
@@ -30,25 +31,32 @@ class User(AbstractUser):
 
 
 class Category(models.Model):
+    """
+    Модель для создания категории (типа) произведений.
+    """
     name = models.CharField(max_length=256)
     slug = models.SlugField(
-        unique=True,
-        max_length=50
+        unique=True
     )
 
 
 class Genre(models.Model):
+    """
+    Модель для создания жанров произведений.
+    """
     name = models.CharField(max_length=256)
     slug = models.SlugField(
-        unique=True,
-        max_length=50
+        unique=True
     )
 
 
 class Title(models.Model):
+    """
+    Модель для создания произведений, к которым пишут отзывы.
+    """
     category = models.ForeignKey(
         Category,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name='categories'
     )
     description = models.TextField(
@@ -59,7 +67,10 @@ class Title(models.Model):
         related_name='genre'
     )
     name = models.CharField(max_length=256)
-    year = models.IntegerField(default='2000')
+    year = models.PositiveSmallIntegerField(validators=(
+        MinValueValidator(1500, 'значение должно быть больше 1500'),
+        MaxValueValidator(now().year, 'значение должно быть меньше текущего года')
+    ))
 
 
 class Review(models.Model):

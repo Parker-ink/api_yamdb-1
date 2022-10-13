@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User, Comment, Review
+from .models import Category, Genre, Title, User, Comment, Review
 
 admin.site.register(User)
 
@@ -36,3 +36,41 @@ class ReviewAdmin(admin.ModelAdmin):
     )
     list_filter = ('pub_date',)
     search_fields = ('pub_date',)
+
+
+class TitleAdmin(admin.ModelAdmin):
+    """
+    Регистрация модели Title в админке.
+    """
+
+    list_display = (
+        'id', 'name', 'year',
+        'category'
+    )
+    search_fields = ('name', 'description')
+    list_filter = ('name', 'year',)
+
+admin.site.register(Title, TitleAdmin)
+
+class GenreAdmin(admin.ModelAdmin):
+    """
+    Регистрация модели Genre в админке.
+    """
+
+    list_display = ('name', 'slug')
+    search_fields = ('name', 'slug')
+    list_filter = ('name',)
+
+admin.site.register(Genre, GenreAdmin)
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    """
+    Регистрация модели Category в админке.
+    """
+
+    list_display = ('name', 'slug')
+    search_fields = ('name',)
+    list_filter = ('name',)
+
+admin.site.register(Category, CategoryAdmin)
