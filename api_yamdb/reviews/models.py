@@ -1,33 +1,6 @@
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.timezone import now
-
-
-class User(AbstractUser):
-
-    USER = 'user'
-    MODERATOR = 'moderator'
-    ADMIN = 'admin'
-    SUPERUSER = 1
-    USER_ROLES = (
-        (USER, 'Пользователь'),
-        (MODERATOR, 'Модератор'),
-        (ADMIN, 'Администратор'),
-    )
-    bio = models.TextField(
-        'Биография',
-        blank=True,
-    )
-    role = models.CharField(
-        'Роль',
-        max_length=10,
-        choices=USER_ROLES,
-        default='user',
-    )
-
-    def __str__(self):
-        return self.username
 
 
 class Category(models.Model):
@@ -64,13 +37,19 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(
         Genre,
-        related_name='genre'
+        related_name='genre',
+        through="GenreTitle"
     )
     name = models.CharField(max_length=256)
     year = models.PositiveSmallIntegerField(validators=(
         MinValueValidator(1500, 'значение должно быть больше 1500'),
         MaxValueValidator(now().year, 'значение должно быть меньше текущего года')
     ))
+
+
+class GenreTitle(models.Model):
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
 
 class Review(models.Model):
