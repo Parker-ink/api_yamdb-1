@@ -39,11 +39,13 @@ class CommentAdmin(admin.ModelAdmin):
 @admin.register(Title)
 class TitleAdmin(admin.ModelAdmin):
     """
-    Регистрация модели Title в админке.
+    Представление произведений в админке.
     """
 
     list_display = (
-        'id', 'name', 'year',
+        'id',
+        'name',
+        'year',
         'category'
     )
     search_fields = ('name', 'description')
@@ -53,7 +55,7 @@ class TitleAdmin(admin.ModelAdmin):
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
     """
-    Регистрация модели Genre в админке.
+    Представление жанров в админке.
     """
 
     list_display = ('name', 'slug')
@@ -64,7 +66,7 @@ class GenreAdmin(admin.ModelAdmin):
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     """
-    Регистрация модели Category в админке.
+    Представление категорий в админке.
     """
 
     list_display = ('name', 'slug')

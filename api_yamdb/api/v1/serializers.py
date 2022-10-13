@@ -44,7 +44,12 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
         )
 
 
@@ -126,8 +131,12 @@ class TitleWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year',
-            'description', 'genre', 'category'
+            'id',
+            'name',
+            'year',
+            'description',
+            'genre',
+            'category'
         )
 
 
@@ -135,16 +144,18 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """
     Серриализация модели Title для чтения.
     """
-    rating = serializers.IntegerField(
-        read_only=True
-    )
+    rating = serializers.IntegerField(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Title
         fields = (
-            'id', 'name', 'year',
-            'rating', 'description',
-            'genre', 'category'
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category'
         )
