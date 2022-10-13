@@ -21,7 +21,7 @@ class ReviewAdmin(admin.ModelAdmin):
 
 
 @admin.register(Comment)
-class ReviewAdmin(admin.ModelAdmin):
+class CommentAdmin(admin.ModelAdmin):
     """
     Представление Комментариев в админ-панели.
     """
@@ -36,6 +36,7 @@ class ReviewAdmin(admin.ModelAdmin):
     search_fields = ('pub_date',)
 
 
+@admin.register(Title)
 class TitleAdmin(admin.ModelAdmin):
     """
     Регистрация модели Title в админке.
@@ -49,9 +50,7 @@ class TitleAdmin(admin.ModelAdmin):
     list_filter = ('name', 'year',)
 
 
-admin.site.register(Title, TitleAdmin)
-
-
+@admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
     """
     Регистрация модели Genre в админке.
@@ -62,9 +61,7 @@ class GenreAdmin(admin.ModelAdmin):
     list_filter = ('name',)
 
 
-admin.site.register(Genre, GenreAdmin)
-
-
+@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     """
     Регистрация модели Category в админке.
@@ -73,6 +70,3 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     search_fields = ('name',)
     list_filter = ('name',)
-
-
-admin.site.register(Category, CategoryAdmin)

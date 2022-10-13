@@ -16,13 +16,13 @@ from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .filters import TitleFilter
-from .permissions import (
+from api.v1.filters import TitleFilter
+from api.v1.permissions import (
     IsAdmin,
     IsAdminOrReadOnly,
     IsAuthorModeratorAdminOrReadOnly
 )
-from .serializers import (
+from api.v1.serializers import (
     CategorySerializer,
     GenreSerializer,
     TitleReadSerializer,
@@ -32,7 +32,6 @@ from .serializers import (
     SignupSerializer,
     UserSerializer,
     TokenSerializer,
-    # UserMePatchSerializer,
 )
 from reviews.models import (
     Category,
