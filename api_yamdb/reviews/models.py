@@ -74,6 +74,9 @@ class Title(models.Model):
 
 
 class Review(models.Model):
+    """
+    Модель для создания обзора для произведения.
+    """
     text = models.TextField(verbose_name='Текст')
     author = models.ForeignKey(
         User,
@@ -93,10 +96,10 @@ class Review(models.Model):
     )
     score = models.PositiveSmallIntegerField(
         verbose_name='Рейтинг',
-        validators=[
+        validators=(
             MinValueValidator(1, 'Допустимы значения от 1 до 10'),
             MaxValueValidator(10, 'Допустимы значения от 1 до 10')
-        ]
+        )
     )
 
     class Meta:
@@ -104,13 +107,19 @@ class Review(models.Model):
         ordering = ['pub_date']
         constraints = [
             models.UniqueConstraint(
-                fields=['title', 'author'],
+                fields=['author', 'title'],
                 name='unique_review'
             ),
         ]
 
+    def __str__(self):
+        return self.text
+
 
 class Comment(models.Model):
+    """
+    Модель для создания комментария на обзоры произведений.
+    """
     text = models.TextField(verbose_name='Текст')
     review = models.ForeignKey(
         Review,
