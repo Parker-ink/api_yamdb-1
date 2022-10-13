@@ -16,13 +16,13 @@ from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .filters import TitleFilter
-from .permissions import (
+from api.v1.filters import TitleFilter
+from api.v1.permissions import (
     IsAdmin,
     IsAdminOrReadOnly,
     IsAuthorModeratorAdminOrReadOnly
 )
-from .serializers import (
+from api.v1.serializers import (
     CategorySerializer,
     GenreSerializer,
     TitleReadSerializer,
@@ -32,7 +32,6 @@ from .serializers import (
     SignupSerializer,
     UserSerializer,
     TokenSerializer,
-    # UserMePatchSerializer,
 )
 from reviews.models import (
     Category,
@@ -132,13 +131,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = (IsAuthorModeratorAdminOrReadOnly,
-                          IsAuthenticatedOrReadOnly)
+    permission_classes = (
+        IsAuthorModeratorAdminOrReadOnly,
+        IsAuthenticatedOrReadOnly
+    )
 
     def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
-        new_queryset = Review.objects.filter(title=title_id)
-        return new_queryset
+        return Review.objects.filter(title=self.kwargs.get('title_id'))
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -156,8 +155,10 @@ class CommentViewSet(viewsets.ModelViewSet):
     """
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = (IsAuthorModeratorAdminOrReadOnly,
-                          IsAuthenticatedOrReadOnly)
+    permission_classes = (
+        IsAuthorModeratorAdminOrReadOnly,
+        IsAuthenticatedOrReadOnly
+    )
 
     def get_queryset(self):
         review = get_object_or_404(
@@ -165,7 +166,7 @@ class CommentViewSet(viewsets.ModelViewSet):
             title_id=self.kwargs.get('title_id'),
             pk=self.kwargs.get('review_id')
         )
-        return review.comments.all().order_by('id')
+        return review.comments.all()
 
     def perform_create(self, serializer):
         review = get_object_or_404(
@@ -177,11 +178,11 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class CreateRetrieveViewSet(
-        mixins.CreateModelMixin,
-        mixins.DestroyModelMixin,
-        mixins.ListModelMixin,
-        viewsets.GenericViewSet
-        ):
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
     pass
 
 
