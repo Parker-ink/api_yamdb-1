@@ -1,28 +1,35 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from users.models import User
+from django.utils.timezone import now
 
 
 class Category(models.Model):
+    """
+    Модель для создания категории (типа) произведений.
+    """
     name = models.CharField(max_length=256)
     slug = models.SlugField(
-        unique=True,
-        max_length=50
+        unique=True
     )
 
 
 class Genre(models.Model):
+    """
+    Модель для создания жанров произведений.
+    """
     name = models.CharField(max_length=256)
     slug = models.SlugField(
-        unique=True,
-        max_length=50
+        unique=True
     )
 
 
 class Title(models.Model):
+    """
+    Модель для создания произведений, к которым пишут отзывы.
+    """
     category = models.ForeignKey(
         Category,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name='categories'
     )
     description = models.TextField(
@@ -34,7 +41,10 @@ class Title(models.Model):
         through="GenreTitle"
     )
     name = models.CharField(max_length=256)
-    year = models.IntegerField(default='2000')
+    year = models.PositiveSmallIntegerField(validators=(
+        MinValueValidator(1500, 'значение должно быть больше 1500'),
+        MaxValueValidator(now().year, 'значение должно быть меньше текущего года')
+    ))
 
 
 class GenreTitle(models.Model):
@@ -43,6 +53,9 @@ class GenreTitle(models.Model):
 
 
 class Review(models.Model):
+    """
+    Модель для создания обзора для произведения.
+    """
     text = models.TextField(verbose_name='Текст')
     author = models.ForeignKey(
         User,
@@ -62,10 +75,10 @@ class Review(models.Model):
     )
     score = models.PositiveSmallIntegerField(
         verbose_name='Рейтинг',
-        validators=[
+        validators=(
             MinValueValidator(1, 'Допустимы значения от 1 до 10'),
             MaxValueValidator(10, 'Допустимы значения от 1 до 10')
-        ]
+        )
     )
 
     class Meta:
@@ -73,13 +86,19 @@ class Review(models.Model):
         ordering = ['pub_date']
         constraints = [
             models.UniqueConstraint(
-                fields=['title', 'author'],
+                fields=['author', 'title'],
                 name='unique_review'
             ),
         ]
 
+    def __str__(self):
+        return self.text
+
 
 class Comment(models.Model):
+    """
+    Модель для создания комментария на обзоры произведений.
+    """
     text = models.TextField(verbose_name='Текст')
     review = models.ForeignKey(
         Review,
