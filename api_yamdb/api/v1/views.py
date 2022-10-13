@@ -148,34 +148,44 @@ class CreateRetrieveViewSet(
 
 
 class CategoryViewSet(CreateRetrieveViewSet):
+    """
+    Работа со списком категорий.
+    """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    ordering_fields = ('name')
     permission_classes = (IsAdminOrReadOnly,)
 
 
 class GenreViewSet(CreateRetrieveViewSet):
+    """
+    Работа со списком жанров.
+    """
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    ordering_fields = ('name')
     permission_classes = (IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    """
+    Работа со списком произведений.
+    """
     queryset = Title.objects.all().annotate(
-        Avg('reviews__score')
+        rating=Avg('reviews__score')
     ).order_by('name')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     permission_classes = (IsAdminOrReadOnly,)
 
     def get_serializer_class(self):
-        if self.action in ('list', 'retrieve'):
+        """
+        Выбор серриализатора для чтения или записи.
+        """
+        if self.action in ['list', 'retrieve']:
             return TitleReadSerializer
         return TitleWriteSerializer
