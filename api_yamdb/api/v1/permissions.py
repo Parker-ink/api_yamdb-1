@@ -18,7 +18,7 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 
 class IsAdmin(permissions.BasePermission):
     """
-    Если роль admin, можно разрешить полный доступ
+    Если роль admin, можно разрешить полный доступ.
     """
 
     def has_permission(self, request, view):
