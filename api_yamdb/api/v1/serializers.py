@@ -149,6 +149,7 @@ class CategorySerializer(serializers.ModelSerializer):
     """
     Серриализация модели Category.
     """
+
     class Meta:
         model = Category
         fields = ('name', 'slug')
@@ -158,6 +159,7 @@ class GenreSerializer(serializers.ModelSerializer):
     """
     Серриализация модели Genre.
     """
+
     class Meta:
         model = Genre
         fields = ('name', 'slug')
@@ -167,6 +169,7 @@ class TitleWriteSerializer(serializers.ModelSerializer):
     """
     Серриализация модели Title для записи.
     """
+
     genre = serializers.SlugRelatedField(
         slug_field='slug', many=True,
         queryset=Genre.objects.all()
@@ -188,6 +191,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """
     Серриализация модели Title для чтения.
     """
+    
     rating = serializers.IntegerField(
         read_only=True
     )

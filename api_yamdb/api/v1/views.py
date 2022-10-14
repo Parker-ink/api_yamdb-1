@@ -171,6 +171,7 @@ class CategoryViewSet(CreateRetrieveViewSet):
     """
     Работа со списком категорий.
     """
+
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
@@ -183,6 +184,7 @@ class GenreViewSet(CreateRetrieveViewSet):
     """
     Работа со списком жанров.
     """
+
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
@@ -195,6 +197,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     """
     Работа со списком произведений.
     """
+
     queryset = Title.objects.all().annotate(
         rating=Avg('reviews__score')
     ).order_by('name')
@@ -206,6 +209,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         """
         Выбор серриализатора для чтения или записи.
         """
+        
         if self.action in ['list', 'retrieve']:
             return TitleReadSerializer
         return TitleWriteSerializer
