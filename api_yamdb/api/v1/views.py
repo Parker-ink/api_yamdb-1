@@ -12,7 +12,6 @@ from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly
 )
 from rest_framework.response import Response
-from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -38,7 +37,6 @@ from reviews.models import (
     Genre,
     Title,
     Review,
-    Comment,
 )
 from users.models import User
 
@@ -129,8 +127,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """
     Работа с информацией обзора на произведение.
     """
-    
-    queryset = Review.objects.all().order_by('pub_date')
+
     serializer_class = ReviewSerializer
     permission_classes = (
         IsAuthorModeratorAdminOrReadOnly,
@@ -138,15 +135,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self):
-        return Review.objects.filter(title=self.kwargs.get('title_id'))
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        return Review.objects.filter(title=title)
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        if Review.objects.filter(
-            title=title,
-            author=self.request.user
-        ).exists():
-            raise ParseError
         serializer.save(author=self.request.user, title=title)
 
 
@@ -155,28 +148,24 @@ class CommentViewSet(viewsets.ModelViewSet):
     Работа с информацией комментария на обзор произведения.
     """
 
-    queryset = Comment.objects.all().order_by('pub_date')
     serializer_class = CommentSerializer
     permission_classes = (
         IsAuthorModeratorAdminOrReadOnly,
         IsAuthenticatedOrReadOnly
     )
 
-    def get_queryset(self):
-        review = get_object_or_404(
+    def get_review(self):
+        return get_object_or_404(
             Review,
             title_id=self.kwargs.get('title_id'),
             pk=self.kwargs.get('review_id')
         )
-        return review.comments.all()
+
+    def get_queryset(self):
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
-        review = get_object_or_404(
-            Review,
-            title_id=self.kwargs.get('title_id'),
-            pk=self.kwargs.get('review_id')
-        )
-        serializer.save(author=self.request.user, review=review)
+        serializer.save(author=self.request.user, review=self.get_review())
 
 
 class CreateRetrieveViewSet(
