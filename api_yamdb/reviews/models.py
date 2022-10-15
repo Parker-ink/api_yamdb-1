@@ -91,14 +91,19 @@ class Title(models.Model):
 
 class GenreTitle(models.Model):
     """
-    Модель для добавления тестовых данных csv.
+    Связь произведений и жанров.
     """
+
     genre = models.ForeignKey(
-        Genre, on_delete=models.CASCADE, verbose_name='Жанр'
-        )
+        Genre,
+        verbose_name='Жанр',
+        on_delete=models.CASCADE,
+    )
     title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, verbose_name='Произведение'
-        )
+        Title,
+        verbose_name='Произведение',
+        on_delete=models.CASCADE,
+    )
 
 
 class Review(models.Model):
