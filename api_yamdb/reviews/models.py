@@ -1,7 +1,8 @@
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils.timezone import now
 
+from reviews.validators import validate_title_year
 from users.models import User
 
 
@@ -11,17 +12,18 @@ class Category(models.Model):
     """
 
     name = models.CharField(
-        verbose_name="Название",
+        verbose_name='Название',
         max_length=256
     )
     slug = models.SlugField(
-        verbose_name="Слаг",
+        verbose_name='Слаг',
         unique=True
     )
 
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
+        ordering = ('slug',)
 
     def __str__(self):
         return self.name
@@ -33,17 +35,18 @@ class Genre(models.Model):
     """
 
     name = models.CharField(
-        verbose_name="Название",
+        verbose_name='Название',
         max_length=256
     )
     slug = models.SlugField(
-        verbose_name="Слаг",
+        verbose_name='Слаг',
         unique=True
     )
 
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
+        ordering = ('slug',)
 
     def __str__(self):
         return self.name
@@ -56,32 +59,26 @@ class Title(models.Model):
 
     category = models.ForeignKey(
         Category,
-        verbose_name="Категория",
-        on_delete=models.CASCADE,
-        related_name='categories'
+        verbose_name='Категория',
+        on_delete=models.SET_NULL,
+        null=True
     )
     description = models.TextField(
-        verbose_name="Описание",
+        verbose_name='Описание',
         blank=True
     )
     genre = models.ManyToManyField(
         Genre,
-        verbose_name="Жанр",
-        related_name='genre',
-        through="GenreTitle"
+        verbose_name='Жанр',
+        through='GenreTitle'
     )
     name = models.CharField(
-        verbose_name="Название",
+        verbose_name='Название',
         max_length=256
     )
     year = models.PositiveSmallIntegerField(
-        verbose_name="Год создания",
-        validators=(
-            MinValueValidator(1500, 'значение должно быть больше 1500'),
-            MaxValueValidator(
-                now().year, 'значение должно быть меньше текущего года'
-            )
-        )
+        verbose_name='Год создания',
+        validators=(validate_title_year,)
     )
 
     class Meta:
@@ -93,8 +90,20 @@ class Title(models.Model):
 
 
 class GenreTitle(models.Model):
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    """
+    Связь произведений и жанров.
+    """
+
+    genre = models.ForeignKey(
+        Genre,
+        verbose_name='Жанр',
+        on_delete=models.CASCADE,
+    )
+    title = models.ForeignKey(
+        Title,
+        verbose_name='Произведение',
+        on_delete=models.CASCADE,
+    )
 
 
 class Review(models.Model):
@@ -130,7 +139,6 @@ class Review(models.Model):
     class Meta:
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
-        ordering = ('pub_date',)
         constraints = (
             models.UniqueConstraint(
                 fields=('author', 'title'),
@@ -139,7 +147,7 @@ class Review(models.Model):
         )
 
     def __str__(self):
-        return self.text
+        return self.text[:settings.CONFINES_TEXT]
 
 
 class Comment(models.Model):
@@ -168,7 +176,6 @@ class Comment(models.Model):
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
-        ordering = ('pub_date',)
 
     def __str__(self):
-        return self.text
+        return self.text[:settings.CONFINES_TEXT]

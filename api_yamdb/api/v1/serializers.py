@@ -11,6 +11,7 @@ class SignupSerializer(serializers.Serializer):
     """
     Сериализатор: регистрация пользователя.
     """
+
     email = serializers.EmailField(max_length=254)
     username = serializers.CharField(max_length=150)
 
@@ -18,9 +19,11 @@ class SignupSerializer(serializers.Serializer):
         """
         Проверяем, что username не равен me.
         """
+
         if value.lower() == settings.UNUSED_USERNAME:
             raise serializers.ValidationError(
-                "Username не может быть me")
+                f'Username не может быть {settings.UNUSED_USERNAME}'
+            )
         return value
 
 
@@ -28,6 +31,7 @@ class TokenSerializer(serializers.Serializer):
     """
     Сериализатор: получение токена авторизации.
     """
+
     confirmation_code = serializers.CharField(max_length=50)
     username = serializers.CharField(max_length=150)
 
@@ -36,10 +40,6 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Сериализатор модели User.
     """
-    role = serializers.ChoiceField(
-        choices=('user', 'moderator', 'admin'),
-        default='user',
-    )
 
     class Meta:
         model = User
@@ -57,6 +57,7 @@ class CommentSerializer(serializers.ModelSerializer):
     """
     Класс для сериализации данных Comment.
     """
+
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
@@ -74,10 +75,15 @@ class ReviewSerializer(serializers.ModelSerializer):
     что при POST запросе от одного пользователя,
     будет создан всего один обзор на одно произведение.
     """
+
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
     )
+
+    class Meta:
+        model = Review
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
 
     def validate(self, data):
         request = self.context['request']
@@ -85,22 +91,16 @@ class ReviewSerializer(serializers.ModelSerializer):
             return data
         author = request.user
         title_id = self.context['request'].parser_context['kwargs']['title_id']
-        if (
-            Review.objects.filter(title_id=title_id,
-                                  author=author).exists()
-        ):
+        if Review.objects.filter(title_id=title_id, author=author).exists():
             raise ValidationError('Нельзя добавить более одного отзыва')
         return data
-
-    class Meta:
-        model = Review
-        fields = ('id', 'text', 'author', 'score', 'pub_date')
 
 
 class CategorySerializer(serializers.ModelSerializer):
     """
     Серриализация модели Category.
     """
+
     class Meta:
         model = Category
         fields = ('name', 'slug')
@@ -110,6 +110,7 @@ class GenreSerializer(serializers.ModelSerializer):
     """
     Серриализация модели Genre.
     """
+
     class Meta:
         model = Genre
         fields = ('name', 'slug')
@@ -119,6 +120,7 @@ class TitleWriteSerializer(serializers.ModelSerializer):
     """
     Серриализация модели Title для записи.
     """
+
     genre = serializers.SlugRelatedField(
         slug_field='slug', many=True,
         queryset=Genre.objects.all()
@@ -144,6 +146,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """
     Серриализация модели Title для чтения.
     """
+
     rating = serializers.IntegerField(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)

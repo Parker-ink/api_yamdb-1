@@ -37,7 +37,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'api_yamdb.urls'
 
-TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 
 TEMPLATES = [
     {
@@ -113,3 +113,5 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 UNUSED_USERNAME = 'me'
 
 FROM = 'noreply@noreply.com'
+
+CONFINES_TEXT = 10

@@ -12,7 +12,6 @@ from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly
 )
 from rest_framework.response import Response
-from rest_framework.exceptions import ParseError
 from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -38,7 +37,6 @@ from reviews.models import (
     Genre,
     Title,
     Review,
-    Comment,
 )
 from users.models import User
 
@@ -48,6 +46,7 @@ def signup(request):
     """
     Регистрация пользователя с отправкой кода подтверждения на почту.
     """
+
     serializer = SignupSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
@@ -66,12 +65,12 @@ def signup(request):
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='confirmation_code',
-        message=f"{username} - {confirmation_code}",
+        message=f'{username} - {confirmation_code}',
         from_email=settings.FROM,
         recipient_list=[email],
         fail_silently=False,
     )
-    return Response(serializer.validated_data, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(('POST',))
@@ -79,16 +78,20 @@ def get_token(request):
     """
     Получение токена авторизации.
     """
+
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = get_object_or_404(
         User, username=serializer.validated_data['username'])
     confirmation_code = serializer.validated_data['confirmation_code']
     if not default_token_generator.check_token(user, confirmation_code):
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            'Передан некорректный код подтверждения',
+            status=status.HTTP_400_BAD_REQUEST
+        )
     token = AccessToken.for_user(user)
     return Response(
-        {'token': str(token.access_token)},
+        {'token': str(token)},
         status=status.HTTP_200_OK
     )
 
@@ -97,6 +100,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     """
     Работа с информацией о пользователях.
     """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAdmin,)
@@ -120,61 +124,57 @@ class UsersViewSet(viewsets.ModelViewSet):
             partial=True
         )
         serializer.is_valid(raise_exception=True)
-        serializer.validated_data['role'] = instance.role
-        serializer.save()
-        return Response(serializer.validated_data)
+        serializer.save(role=instance.role, partial=True)
+        return Response(serializer.data)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     """
     Работа с информацией обзора на произведение.
     """
-    queryset = Review.objects.all()
+
     serializer_class = ReviewSerializer
     permission_classes = (
         IsAuthorModeratorAdminOrReadOnly,
         IsAuthenticatedOrReadOnly
     )
 
+    def get_title(self):
+        return get_object_or_404(
+            Title,
+            pk=self.kwargs['title_id']
+        )
+
     def get_queryset(self):
-        return Review.objects.filter(title=self.kwargs.get('title_id'))
+        return Review.objects.filter(title=self.get_title())
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        if Review.objects.filter(
-            title=title,
-            author=self.request.user
-        ).exists():
-            raise ParseError
-        serializer.save(author=self.request.user, title=title)
+        serializer.save(author=self.request.user, title=self.get_title())
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     """
     Работа с информацией комментария на обзор произведения.
     """
-    queryset = Comment.objects.all()
+
     serializer_class = CommentSerializer
     permission_classes = (
         IsAuthorModeratorAdminOrReadOnly,
         IsAuthenticatedOrReadOnly
     )
 
-    def get_queryset(self):
-        review = get_object_or_404(
+    def get_review(self):
+        return get_object_or_404(
             Review,
-            title_id=self.kwargs.get('title_id'),
-            pk=self.kwargs.get('review_id')
+            title_id=self.kwargs['title_id'],
+            pk=self.kwargs['review_id']
         )
-        return review.comments.all()
+
+    def get_queryset(self):
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
-        review = get_object_or_404(
-            Review,
-            title_id=self.kwargs.get('title_id'),
-            pk=self.kwargs.get('review_id')
-        )
-        serializer.save(author=self.request.user, review=review)
+        serializer.save(author=self.request.user, review=self.get_review())
 
 
 class CreateRetrieveViewSet(
@@ -190,7 +190,8 @@ class CategoryViewSet(CreateRetrieveViewSet):
     """
     Работа со списком категорий.
     """
-    queryset = Category.objects.all()
+
+    queryset = Category.objects.all().order_by('slug')
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -202,7 +203,8 @@ class GenreViewSet(CreateRetrieveViewSet):
     """
     Работа со списком жанров.
     """
-    queryset = Genre.objects.all()
+
+    queryset = Genre.objects.all().order_by('slug')
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -214,7 +216,8 @@ class TitleViewSet(viewsets.ModelViewSet):
     """
     Работа со списком произведений.
     """
-    queryset = Title.objects.all().annotate(
+
+    queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
     ).order_by('name')
     filter_backends = (DjangoFilterBackend,)
@@ -225,6 +228,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         """
         Выбор серриализатора для чтения или записи.
         """
+
         if self.action in ['list', 'retrieve']:
             return TitleReadSerializer
         return TitleWriteSerializer
