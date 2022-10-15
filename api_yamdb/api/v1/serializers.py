@@ -22,7 +22,7 @@ class SignupSerializer(serializers.Serializer):
 
         if value.lower() == settings.UNUSED_USERNAME:
             raise serializers.ValidationError(
-                "Username не может быть me")
+                'Username не может быть me')
         return value
 
 
