@@ -113,3 +113,5 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 UNUSED_USERNAME = 'me'
 
 FROM = 'noreply@noreply.com'
+
+CONFINES_TEXT = 10

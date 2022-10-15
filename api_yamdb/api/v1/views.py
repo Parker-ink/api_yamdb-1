@@ -46,6 +46,7 @@ def signup(request):
     """
     Регистрация пользователя с отправкой кода подтверждения на почту.
     """
+
     serializer = SignupSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
@@ -77,6 +78,7 @@ def get_token(request):
     """
     Получение токена авторизации.
     """
+
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     user = get_object_or_404(
@@ -95,6 +97,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     """
     Работа с информацией о пользователях.
     """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (IsAdmin,)
@@ -219,7 +222,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         """
         Выбор серриализатора для чтения или записи.
         """
-        
+
         if self.action in ['list', 'retrieve']:
             return TitleReadSerializer
         return TitleWriteSerializer

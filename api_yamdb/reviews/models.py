@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from .validators import validate_title_year
+from django.utils.timezone import now
 
+from reviews.validators import validate_title_year
 from users.models import User
 
 
@@ -136,7 +138,7 @@ class Review(models.Model):
         )
 
     def __str__(self):
-        return self.text
+        return self.text[:settings.CONFINES_TEXT]
 
 
 class Comment(models.Model):
@@ -167,4 +169,4 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text
+        return self.text[:settings.CONFINES_TEXT]
