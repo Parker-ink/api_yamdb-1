@@ -65,12 +65,12 @@ def signup(request):
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='confirmation_code',
-        message=f"{username} - {confirmation_code}",
+        message=f'{username} - {confirmation_code}',
         from_email=settings.FROM,
         recipient_list=[email],
         fail_silently=False,
     )
-    return Response(serializer.validated_data, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(('POST',))
@@ -85,10 +85,13 @@ def get_token(request):
         User, username=serializer.validated_data['username'])
     confirmation_code = serializer.validated_data['confirmation_code']
     if not default_token_generator.check_token(user, confirmation_code):
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            'Передан некорректный код подтверждения',
+            status=status.HTTP_400_BAD_REQUEST
+        )
     token = AccessToken.for_user(user)
     return Response(
-        {'token': str(token.access_token)},
+        {'token': str(token)},
         status=status.HTTP_200_OK
     )
 
@@ -121,9 +124,8 @@ class UsersViewSet(viewsets.ModelViewSet):
             partial=True
         )
         serializer.is_valid(raise_exception=True)
-        serializer.validated_data['role'] = instance.role
-        serializer.save()
-        return Response(serializer.validated_data)
+        serializer.save(role=instance.role, partial=True)
+        return Response(serializer.data)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
