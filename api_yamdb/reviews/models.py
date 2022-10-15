@@ -61,8 +61,7 @@ class Title(models.Model):
         Category,
         verbose_name='Категория',
         on_delete=models.SET_NULL,
-        null=True,
-        related_name='categories'
+        null=True
     )
     description = models.TextField(
         verbose_name='Описание',
@@ -71,7 +70,6 @@ class Title(models.Model):
     genre = models.ManyToManyField(
         Genre,
         verbose_name='Жанр',
-        related_name='genre',
         through='GenreTitle'
     )
     name = models.CharField(
@@ -92,8 +90,15 @@ class Title(models.Model):
 
 
 class GenreTitle(models.Model):
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
-    title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    """
+    Модель для добавления тестовых данных csv.
+    """
+    genre = models.ForeignKey(
+        Genre, on_delete=models.CASCADE, verbose_name='Жанр'
+        )
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE, verbose_name='Произведение'
+        )
 
 
 class Review(models.Model):
