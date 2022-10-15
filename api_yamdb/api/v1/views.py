@@ -189,7 +189,7 @@ class CategoryViewSet(CreateRetrieveViewSet):
     Работа со списком категорий.
     """
 
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('slug')
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -202,7 +202,7 @@ class GenreViewSet(CreateRetrieveViewSet):
     Работа со списком жанров.
     """
 
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by('slug')
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -215,7 +215,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     Работа со списком произведений.
     """
 
-    queryset = Title.objects.all().annotate(
+    queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
     ).order_by('name')
     filter_backends = (DjangoFilterBackend,)
