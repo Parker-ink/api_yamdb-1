@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         message = 'Данные добавлены!'
         with contextlib.suppress(ValueError):
-            call_command('flush', interactive=False)
+            call_command('flush', '--no-input')
         call_command('migrate')
         for fixture, app, model in self.DATA:
             try:
