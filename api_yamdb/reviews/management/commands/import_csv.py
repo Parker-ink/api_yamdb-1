@@ -28,9 +28,6 @@ class Command(BaseCommand):
             call_command('flush', interactive=False)
         call_command('migrate')
         for fixture, app, model in self.DATA:
-            path_to_file = os.path.join(
-                settings.BASE_DIR, 'static', 'data', fixture
-            )
             try:
                 current_model = apps.get_model(app, model)
             except LookupError:
@@ -38,6 +35,9 @@ class Command(BaseCommand):
                            f'Ошибка в наименованиях приложений и моделей: '
                            f'{app}, {model}')
                 break
+            path_to_file = os.path.join(
+                settings.BASE_DIR, 'static', 'data', fixture
+            )
             if not os.path.exists(path_to_file):
                 message = (f'Данные не добавлены!!! '
                            f'Такой файл не существует: {path_to_file}')
