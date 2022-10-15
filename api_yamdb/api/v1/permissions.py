@@ -3,7 +3,7 @@ from rest_framework import permissions
 
 class IsAdmin(permissions.BasePermission):
     """
-    Если роль admin, можно разрешить полный доступ.
+    Доступ предоставляется только администратору.
     """
 
     def has_permission(self, request, view):
@@ -15,7 +15,8 @@ class IsAdmin(permissions.BasePermission):
 
 class IsAdminOrReadOnly(permissions.BasePermission):
     """
-    Или admin, или только читать можно.
+    Полный доступ предоставляется только администратору,
+    остальным только читать можно.
     """
 
     def has_permission(self, request, view):
