@@ -11,11 +11,11 @@ class Category(models.Model):
     """
 
     name = models.CharField(
-        verbose_name="Название",
+        verbose_name='Название',
         max_length=256
     )
     slug = models.SlugField(
-        verbose_name="Слаг",
+        verbose_name='Слаг',
         unique=True
     )
 
