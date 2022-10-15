@@ -1,7 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.timezone import now
-
+from django.conf import settings
 from users.models import User
 
 
@@ -139,7 +139,7 @@ class Review(models.Model):
         )
 
     def __str__(self):
-        return self.text
+        return self.text[:settings.CONFINES_TEXT]
 
 
 class Comment(models.Model):
@@ -171,4 +171,4 @@ class Comment(models.Model):
         ordering = ('pub_date',)
 
     def __str__(self):
-        return self.text
+        return self.text[:settings.CONFINES_TEXT]
