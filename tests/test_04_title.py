@@ -25,7 +25,7 @@ class Test04TitleAPI:
         assert response.status_code == 400, (
             'Проверьте, что при POST запросе `/api/v1/titles/` с не правильными данными возвращает статус 400'
         )
-        data = {'name': 'Поворот туда', 'year': 20000, 'genre': [genres[0]['slug'], genres[1]['slug']],
+        data = {'name': 'Поворот туда', 'year': 2000, 'genre': [genres[0]['slug'], genres[1]['slug']],
                 'category': categories[0]['slug'], 'description': 'Крутое пике'}
         response = admin_client.post('/api/v1/titles/', data=data)
         assert response.status_code == 201, (
