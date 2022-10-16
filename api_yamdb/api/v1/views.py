@@ -177,7 +177,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, review=self.get_review())
 
 
-class CreateRetrieveViewSet(
+class CreateRetrieveDeleteViewSet(
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
     mixins.ListModelMixin,
@@ -186,12 +186,12 @@ class CreateRetrieveViewSet(
     pass
 
 
-class CategoryViewSet(CreateRetrieveViewSet):
+class CategoryViewSet(CreateRetrieveDeleteViewSet):
     """
     Работа со списком категорий.
     """
 
-    queryset = Category.objects.all().order_by('slug')
+    queryset = Category.objects.order_by('slug')
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -199,12 +199,12 @@ class CategoryViewSet(CreateRetrieveViewSet):
     permission_classes = (IsAdminOrReadOnly,)
 
 
-class GenreViewSet(CreateRetrieveViewSet):
+class GenreViewSet(CreateRetrieveDeleteViewSet):
     """
     Работа со списком жанров.
     """
 
-    queryset = Genre.objects.all().order_by('slug')
+    queryset = Genre.objects.order_by('slug')
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -217,18 +217,23 @@ class TitleViewSet(viewsets.ModelViewSet):
     Работа со списком произведений.
     """
 
-    queryset = Title.objects.annotate(
-        rating=Avg('reviews__score')
-    ).order_by('name')
+    queryset = Title.objects.prefetch_related(
+        'genre'
+    ).select_related(
+        'category'
+    ).annotate(rating=Avg(
+        'reviews__score'
+    )).order_by('name')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     permission_classes = (IsAdminOrReadOnly,)
+    db_index = True
 
     def get_serializer_class(self):
         """
         Выбор серриализатора для чтения или записи.
         """
 
-        if self.action in ['list', 'retrieve']:
+        if self.action in ('list', 'retrieve'):
             return TitleReadSerializer
         return TitleWriteSerializer
