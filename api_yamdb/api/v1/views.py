@@ -211,13 +211,18 @@ class TitleViewSet(viewsets.ModelViewSet):
     Работа со списком произведений.
     """
 
-    queryset = Title.objects.select_related().annotate(
-        rating=Avg('reviews__score')
-    ).order_by('name')
+    queryset = Title.objects.prefetch_related(
+        'genre'
+    ).select_related(
+        'category'
+    ).annotate(rating=Avg(
+        'reviews__score'
+    )).order_by('name')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     permission_classes = (IsAdminOrReadOnly,)
-    db_index=True
+    db_index = True
+
     def get_serializer_class(self):
         """
         Выбор серриализатора для чтения или записи.
