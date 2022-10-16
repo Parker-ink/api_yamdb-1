@@ -65,12 +65,12 @@ def signup(request):
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='confirmation_code',
-        message=f"{username} - {confirmation_code}",
+        message=f'{username} - {confirmation_code}',
         from_email=settings.FROM,
         recipient_list=[email],
         fail_silently=False,
     )
-    return Response(serializer.validated_data, status=status.HTTP_200_OK)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(('POST',))
@@ -85,10 +85,13 @@ def get_token(request):
         User, username=serializer.validated_data['username'])
     confirmation_code = serializer.validated_data['confirmation_code']
     if not default_token_generator.check_token(user, confirmation_code):
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            'Передан некорректный код подтверждения',
+            status=status.HTTP_400_BAD_REQUEST
+        )
     token = AccessToken.for_user(user)
     return Response(
-        {'token': str(token.access_token)},
+        {'token': str(token)},
         status=status.HTTP_200_OK
     )
 
@@ -121,9 +124,8 @@ class UsersViewSet(viewsets.ModelViewSet):
             partial=True
         )
         serializer.is_valid(raise_exception=True)
-        serializer.validated_data['role'] = instance.role
-        serializer.save()
-        return Response(serializer.validated_data)
+        serializer.save(role=instance.role, partial=True)
+        return Response(serializer.data)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -137,13 +139,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
         IsAuthenticatedOrReadOnly
     )
 
+    def get_title(self):
+        return get_object_or_404(
+            Title,
+            pk=self.kwargs['title_id']
+        )
+
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        return Review.objects.filter(title=title)
+        return Review.objects.filter(title=self.get_title())
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        serializer.save(author=self.request.user, title=title)
+        serializer.save(author=self.request.user, title=self.get_title())
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -160,8 +166,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_review(self):
         return get_object_or_404(
             Review,
-            title_id=self.kwargs.get('title_id'),
-            pk=self.kwargs.get('review_id')
+            title_id=self.kwargs['title_id'],
+            pk=self.kwargs['review_id']
         )
 
     def get_queryset(self):

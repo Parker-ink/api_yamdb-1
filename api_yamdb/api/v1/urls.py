@@ -12,7 +12,6 @@ from api.v1.views import (
     signup
 )
 
-app_name = 'api'
 
 router_v1 = SimpleRouter()
 

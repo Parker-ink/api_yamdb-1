@@ -22,7 +22,8 @@ class SignupSerializer(serializers.Serializer):
 
         if value.lower() == settings.UNUSED_USERNAME:
             raise serializers.ValidationError(
-                "Username не может быть me")
+                f'Username не может быть {settings.UNUSED_USERNAME}'
+            )
         return value
 
 
@@ -39,11 +40,6 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Сериализатор модели User.
     """
-
-    role = serializers.ChoiceField(
-        choices=('user', 'moderator', 'admin'),
-        default='user',
-    )
 
     class Meta:
         model = User

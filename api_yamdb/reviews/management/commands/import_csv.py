@@ -1,68 +1,68 @@
+import contextlib
 import csv
 import os
 
-from django.core.management.base import BaseCommand
+from django.apps import apps
 from django.conf import settings
-
-from reviews.models import (
-    Category,
-    Comment,
-    Genre,
-    GenreTitle,
-    Review,
-    Title
-)
-from users.models import User
+from django.core.management import call_command
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = u'''
-    Загрузка информации из csv-файла в базу данных.
-    Для импорта данных выполните команды в следующем порядке:
-    1) python3 manage.py import_csv users
-    2) python3 manage.py import_csv category
-    3) python3 manage.py import_csv genre
-    4) python3 manage.py import_csv titles
-    5) python3 manage.py import_csv review
-    6) python3 manage.py import_csv comments
-    7) python3 manage.py import_csv genre_title
-    '''
+    help = '''Загрузка тестовой информации из csv-файла в базу данных.
+    Вся существующая информация будет удалена из базы данных.'''
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            'file_name',
-            type=str,
-            help=u'Имя файла без расширения'
-        )
+    # имя файла с данными, приложение, модель
+    DATA = (
+        ('users.csv', 'users', 'User'),
+        ('category.csv', 'reviews', 'Category'),
+        ('genre.csv', 'reviews', 'Genre'),
+        ('titles.csv', 'reviews', 'Title'),
+        ('review.csv', 'reviews', 'Review'),
+        ('comments.csv', 'reviews', 'Comment'),
+        ('genre_title.csv', 'reviews', 'GenreTitle'),
+    )
 
     def handle(self, *args, **kwargs):
-        file_name = f"{kwargs['file_name']}.csv"
-        path_to_file = os.path.join(
-            settings.BASE_DIR, 'static', 'data', file_name
-        )
-        with open(path_to_file, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
+        message = 'Данные добавлены!'
 
-                if file_name == 'users.csv':
-                    User.objects.create(**row)
+        # Если БД существует, очищаем её таблицы от данных
+        with contextlib.suppress(ValueError):
+            call_command('flush', '--no-input')
 
-                elif file_name == 'category.csv':
-                    Category.objects.create(**row)
+        # Выполняем миграции
+        call_command('migrate')
 
-                elif file_name == 'genre.csv':
-                    Genre.objects.create(**row)
+        # Импорт данных из файлов в БД
+        for fixture, app, model in self.DATA:
 
-                elif file_name == 'titles.csv':
-                    Title.objects.create(**row)
+            # Импортрируем модель
+            try:
+                current_model = apps.get_model(app, model)
+            except LookupError:
+                message = (f'Данные не добавлены!!! '
+                           f'Ошибка в наименованиях приложений и моделей: '
+                           f'{app}, {model}')
+                break
 
-                elif file_name == 'review.csv':
-                    Review.objects.create(**row)
+            # Получаем полный путь до файла с данными
+            path_to_file = os.path.join(
+                settings.BASE_DIR, 'static', 'data', fixture
+            )
+            if not os.path.exists(path_to_file):
+                message = (f'Данные не добавлены!!! '
+                           f'Такой файл не существует: {path_to_file}')
+                break
 
-                elif file_name == 'comments.csv':
-                    Comment.objects.create(**row)
+            with open(path_to_file, newline='') as csvfile:
 
-                elif file_name == 'genre_title.csv':
-                    GenreTitle.objects.create(**row)
+                # Получаем данные из csv файла
+                reader = csv.DictReader(csvfile)
 
-        self.stdout.write("Данные добавлены")
+                # Формируем список данных
+                bulk_data = [current_model(**row) for row in reader]
+
+                # Сохраняем данные в БД
+                current_model.objects.bulk_create(bulk_data)
+
+        self.stdout.write(message)
