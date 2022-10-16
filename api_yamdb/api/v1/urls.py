@@ -12,7 +12,6 @@ from api.v1.views import (
     signup
 )
 
-
 router_v1 = SimpleRouter()
 
 router_v1.register(
@@ -33,7 +32,6 @@ auth_urlpatterns = [
     path('signup/', signup, name='signup'),
     path('token/', get_token, name='token'),
 ]
-
 
 urlpatterns = [
     path('auth/', include(auth_urlpatterns)),
