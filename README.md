@@ -58,7 +58,7 @@ Response
 
 ## Developers
 [Sergey Afonin](https://github.com/afoninsb)
-[Vdim Kovalev](https://github.com/Parker-ink)
+[Vadim Kovalev](https://github.com/Parker-ink)
 [Evgeniy Curan](https://github.com/tsurik1)
 
 ## License
